@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ランク戦タクティクス v6.6</title>
+<title>ランク戦タクティクス v6.7</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -2044,6 +2044,7 @@ function render0(){
   if(SCREEN==='local')return renderLocalSetup();
   if(SCREEN==='league')return renderLeague();
   if(SCREEN==='rp')return renderRP();
+  if(SCREEN==='pcadd')return renderPCAdd();
   if(SCREEN==='agent')return renderAgent();
   if(SCREEN==='replays')return renderReplays();
   if(SCREEN==='dex')return renderDex();
@@ -2093,6 +2094,7 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
  '建物の破壊：メテオラ・擲弾銃・サラマンダー・トマホークなどの炸裂弾は、着弾点と周り8マスの建物を削る（1段あたり耐久8）。削りきると1段低くなり、崩れきると瓦礫（移動コスト+1）。足場や射線が変わる。マップは市街地・河川敷・工業地区・高層ビル街・住宅地・港湾地区・郊外の公園の7つ。',
  '防衛任務：B級以上。波ごとに現れるトリオン兵（フィッチ・シザー・ドーム・モルタ・スパイン）を全滅させれば成功。通常・強化・大規模侵攻の3段階で、倒した数で個人ポイント、初回成功でスキルポイント。',
  '隊員ページ：自分の隊員は隊員ページの上部、ほかの隊員は部隊の詳細の行や自分の部隊の仲間の「隊員ページ」から、隊員名・能力・トリガー構成の順で見られる。',
+ '自分が隊長の3人部隊は、隊員ページの「仲間を追加（4人目）」から、あとで4人目を迎えられる（無所属のB級隊員の候補から1人）。',
  '仲間の成長：同じ部隊の仲間（自分以外）は、試合ごとに個人ポイントを得る（ランク戦：出場+40・撃破1人+60・生存+40・部隊が最多得点+40、防衛任務はその半分ほど）。ポイントに応じてスキルを覚え、技術・回避が伸びる。隊員ページで確認できる。NPC部隊の隊員は成長しない。',
  '隊長が緊急脱出しても通信はつながっているので、仲間が残っていれば部隊への指示・仲間への個別指示・集中攻撃を出し続けられる（作戦タイムも続く）。隊長の指揮による命中の上乗せも残る。隊員として脱出した場合は、作戦タイムを飛ばして自動で進む。',
  'スマホを横向きにすると、戦闘画面は左に盤面・右に操作欄の配置になる。',
@@ -2103,7 +2105,7 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
 }
 function renderHome(){
   const on=CAP==='ok';
-  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v6.6）</p>
+  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v6.7）</p>
   <div class="row" style="margin:-10px 0 16px">${soundUI()}<button class="opt" type="button" data-a="savescr">セーブデータ</button><button class="opt" type="button" data-a="dex">トリガー性能</button></div>
   <div class="card tutc"><h2>はじめての方へ</h2><p class="muted small" style="margin-top:0">基本編：隊員の選び方・移動・扇の向け方・交戦（約3分）。応用編：トリオン、エスクードの壁、グラスホッパーの跳躍、オペレーターのスキャン、仲間への指示（約5分）。</p><div class="row"><button class="btn" type="button" data-a="tutorial">基本編</button><button class="btn ghost" type="button" data-a="tutorial2">応用編</button></div></div>
   <div class="card mine"><h2>ボーダー隊員になる</h2><p class="muted small" style="margin-top:0">自分がなりきる隊員を1人作り、C級（訓練生）かB級から始めて、部隊でランク戦を戦います。自分の1人だけを操作し、仲間はCPUが動きます。</p><button class="btn" type="button" data-a="rp">隊員ページへ</button></div>
@@ -3359,7 +3361,7 @@ function renderRP(){
      <div style="margin:0 0 10px">${L.me.team.members.map((x,i)=>i===L.me.team.pcIdx?`<p class="small" style="margin:4px 0"><b>${esc(x.name)}（あなた）</b></p>`:`<div class="row" style="margin:4px 0"><span class="small">${esc(x.name)} <span class="muted">${posOf(x)}・${trigsOf(x).filter(isAtk).map(k=>TR[k].n).join('/')}</span>${(x.se||SE_OF[x.name])?` <span class="sefx">${esc(SES[x.se||SE_OF[x.name]].n)}</span>`:''}<br><span class="muted">${(mateInit(x),x.pts)}pt・技術${x.TEC}・回避${x.EVA}・スキル${(x.sk||[]).length}　${x.games}試合${x.kills}撃破</span></span><span class="row" style="margin-left:auto;gap:6px"><button class="btn ghost sm" type="button" data-a="agent" data-v="me:${i}">隊員ページ</button><button class="btn ghost sm" type="button" data-a="mateedit" data-v="${i}">トリガー</button></span></div>`).join('')}</div>
      ${(L.me.growLog||[]).length?`<details class="tdesc" style="margin:0 0 8px"><summary>仲間の最近の成長</summary><p>${L.me.growLog.slice().reverse().map(g=>esc(g.s)).join('<br>')}</p></details>`:''}
      <p class="small muted" style="margin:0 0 8px">仲間も試合に出るたびに個人ポイントを得て、スキルを覚え技術・回避が伸びます（出場+40、撃破+60、生存+40、部隊が最多得点+40。防衛任務は半分ほど）。</p>
-     <div class="row"><button class="btn" type="button" data-a="league">ランク戦へ</button><button class="btn ghost sm" type="button" data-a="pcleave">部隊を抜ける</button></div></div>`
+     <div class="row"><button class="btn" type="button" data-a="league">ランク戦へ</button>${canAddMate()?'<button class="btn ghost sm" type="button" data-a="pcaddscr">仲間を追加（4人目）</button>':''}<button class="btn ghost sm" type="button" data-a="pcleave">部隊を抜ける</button></div></div>`
    :PC.cls==='C'?`<div class="card"><h2>所属部隊：なし</h2><p class="small" style="margin:0">C級（訓練生）は部隊に入れません。個人ランク戦で4000ptに届くとB級に昇格します（あと${4000-(PC.pts||1000)}pt）。</p></div>`:`<div class="card"><h2>所属部隊：なし</h2><p class="small" style="margin:0 0 10px">B級隊員として部隊に入るか、自分の部隊を作ってランク戦に出ましょう。</p><div class="row"><button class="btn" type="button" data-a="pcoffers">部隊からの勧誘を見る</button><button class="btn ghost" type="button" data-a="pccands">自分の部隊を作る</button></div></div>`;
   const rec=PC.rec||{matches:0,kills:0,downs:0};
   app.innerHTML=`<div class="top"><h2>ボーダー隊員</h2><button class="btn ghost sm" type="button" data-a="home">戻る</button></div>
@@ -3419,6 +3421,21 @@ function renderPCOffers(){
    <button class="btn sm" type="button" data-a="pcjoin" data-v="${id}">入隊する</button></div>`;}).join('')}
   <button class="btn ghost sm" type="button" data-a="pcreoffer">ほかの部隊の勧誘を待つ</button>`;
 }
+
+const canAddMate=()=>{if(!PC||!pcInLeague())return false;const T=LEAGUE.me.team;return T.pcIdx===0&&T.members.length<4;};
+function renderPCAdd(){
+  if(!canAddMate()){SCREEN='rp';return renderRP();}
+  if(!PC.addCands){PC.addCands=Array.from({length:4},freeAgent);pcSave();}
+  const T=LEAGUE.me.team;
+  app.innerHTML=`<div class="top"><h2>仲間を追加（4人目）</h2><button class="btn ghost sm" type="button" data-a="rp">戻る</button></div>
+  <p class="small muted" style="margin-top:-6px">無所属のB級隊員から1人を${esc(T.name)}に迎えます。次の試合から4人で出撃し、加わった仲間も試合ごとに成長します。</p>
+  <div class="members">${PC.addCands.map((c,i)=>`<div class="mem"><div class="memhead"><b>${esc(c.name)}</b><span class="pos">${posOf(c)}</span></div>
+   <div class="abil">${hexSVG(c,'var(--hexc)',false)}<div class="stl"><div><span>行動力</span><b>${apOf(c)}</b></div><div><span>体力</span><b>${hpOf(c)}</b></div></div></div>
+   <p class="small" style="margin:4px 0 8px">${trigsOf(c).map(k=>TR[k].n).join('・')}${(c.sk||[]).length?`<br><span class="muted">スキル：${c.sk.map(x=>SKILLS[x].n).join('・')}</span>`:''}${c.se?`<br><span class="sefx">サイドエフェクト：${seLabel(c.se)}</span>`:''}</p>
+   <button class="btn sm" type="button" data-a="pcaddpick" data-v="${i}">仲間にする</button></div>`).join('')}</div>
+  <div class="row" style="margin-top:12px"><button class="btn ghost sm" type="button" data-a="pcaddre">候補を入れ替える</button></div>`;
+}
+
 function renderPCCands(){
   if(!PC.cands){PC.cands=Array.from({length:6},freeAgent);pcSave();}
   ui.pick=ui.pick||[];ui.ptac=ui.ptac||'balanced';
@@ -4312,6 +4329,9 @@ app.addEventListener('click',e=>{
   else if(a==='pcjoin'){const t=npcById(v);if(confirm(`${t.name}に入隊しますか？（新しいシーズンが始まります）`)){pcJoinTeam(v);toast(`${t.name}に入隊しました`);SCREEN='rp';render();}}
   else if(a==='pccands'){if(PC&&PC.cls==='C'){toast('C級は部隊を作れません');return;}ui.pick=[];SCREEN='pccands';render();}
   else if(a==='pcrecands'){PC.cands=null;ui.pick=[];render();}
+  else if(a==='pcaddscr'){if(canAddMate()){SCREEN='pcadd';window.scrollTo(0,0);render();}}
+  else if(a==='pcaddre'){PC.addCands=null;pcSave();render();}
+  else if(a==='pcaddpick'){const c=PC.addCands&&PC.addCands[+v];if(c&&canAddMate()&&confirm(`${c.name}を${LEAGUE.me.team.name}に迎えますか？`)){const m=clone(c);mateInit(m);LEAGUE.me.team.members.push(m);lgSave();PC.addCands=null;pcSave();sfx('chime');toast(`${c.name}が仲間に加わりました（4人部隊）`);SCREEN='rp';render();}}
   else if(a==='pcpick'){const i=+v;ui.pick=ui.pick.includes(i)?ui.pick.filter(x=>x!==i):ui.pick.length<3?ui.pick.concat([i]):ui.pick;render();}
   else if(a==='pcfound'){if(ui.pick.length>=2&&confirm(`${PC.sei}隊を結成しますか？（新しいシーズンが始まります）`)){pcFoundTeam(ui.pick.map(i=>PC.cands[i]),ui.ptac);toast(`${PC.sei}隊を結成しました`);SCREEN='rp';render();}}
   else if(a==='pcleave'){if(confirm('部隊を抜けますか？（NPCだけの新しいシーズンになります）')){const bo=baseOrders();lgNew(LEAGUE.season+1,bo.B,null,false,bo.A,'B');PC.team=null;pcSave();render();}}
