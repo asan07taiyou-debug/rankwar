@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ランク戦タクティクス v5.4</title>
+<title>ランク戦タクティクス v5.8</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -566,6 +566,40 @@ body{background:var(--bg);color:var(--ink)}
 .fx-dust{fill:var(--b2);opacity:0;animation:fxdust .9s ease-out both}
 @keyframes fxdust{0%{opacity:.6;transform:scale(.4)}100%{opacity:0;transform:scale(1.5)}}
 .fx-dust{transform-box:fill-box;transform-origin:center}
+.bmu.rpu{min-width:0}.bmu.rpu.out{opacity:.45}
+.rpctl input[type=range]{accent-color:var(--accent,#19F5C1)}
+.rpctl .opt{padding:6px 10px}
+.rpmode .bm-joyw{display:none}
+.rpmode .bm-units{display:block!important;overflow:visible}
+.rpteams{display:flex;flex-direction:column;gap:3px;width:100%}
+.rpteam{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;border-left:4px solid var(--c);padding:2px 6px;background:var(--road)}
+.rptn{font-size:12px;font-weight:700;min-width:6.5em;display:flex;align-items:center;gap:4px}
+.rptn b{font-family:"Roboto Condensed",sans-serif}
+.rpu{display:inline-flex;flex-direction:column;gap:2px;min-width:3.6em}
+.rpu em{font-style:normal;font-size:11px;line-height:1.1}
+.rpu i{display:block;height:4px;background:rgba(0,0,0,.25);border-radius:2px;overflow:hidden}
+.rpu i u{display:block;height:100%}
+.rpu.out{opacity:.4}
+.spec{padding:6px 8px;border:1.5px dashed var(--line);width:100%}
+.prof .profname{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prof .profname>b{font-size:21px}
+.profav{display:flex;justify-content:center;margin:10px 0 6px}
+.profav svg{width:min(200px,58vw);height:auto;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+.profh{margin:14px 0 6px;font-size:14px;letter-spacing:.12em;color:var(--frame,var(--t0));font-family:"Roboto Condensed","Noto Sans JP",sans-serif;border-bottom:1.5px solid var(--line);padding-bottom:4px}
+.tset{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tset h5{margin:0 0 4px;font-size:12px;letter-spacing:.1em;color:var(--muted)}
+.tslot2{display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--accent,#19F5C1);color:var(--accink,#04241F);border-radius:3px;padding:7px 9px;margin:0 0 5px;min-height:34px}
+.tslot2 b{font-size:14px}.tslot2 small{font-size:10.5px;opacity:.75}
+.tslot2.empty{background:transparent;border:1.5px dashed var(--line);color:var(--muted)}
+.memrow{display:flex!important;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer;color:var(--ink);font:inherit}
+.memrow .mtx{flex:1;min-width:0;line-height:1.5}
+.memrow .mgo{font-size:26px;color:var(--muted)}
+.mav svg{display:block;border-radius:6px}
+.mavbtn{padding:0;border:0;background:none;cursor:pointer;margin-right:8px;flex:none}
+.lkrow{display:grid;grid-template-columns:6.5em auto 1fr auto;align-items:center;gap:6px;margin:5px 0}
+.lkrow b{text-align:center;font-weight:600}
+.lkrow .opt{padding:6px 12px}
+.lkrow .sw{display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:-3px;margin-right:6px;border:1.5px solid rgba(255,255,255,.6)}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#071A22">
@@ -1842,6 +1876,7 @@ function contactSet(){
   return s;
 }
 function canCtrl(u){
+  if(MODE==='replay')return false;
   if(!u||u.out||!G||G.status!=='play')return false;
   {const pc=G.teams[u.team].pc;if(pc&&u.id!==pc)return false;}
   if(MODE==='local'){if(G.teams[u.team].cpu)return false;if(G.phase==='exec')return true;return !!PLAN&&u.team===PLAN.team;}
@@ -1853,6 +1888,7 @@ const canPath=u=>!!u&&G.phase==='plan'&&!!PLAN&&!PLAN.submitted&&u.team===PLAN.t
 function defaultOrders(S,team){const o={};S.units.filter(u=>!u.out&&u.team===team).forEach(u=>{o[u.id]={path:[],mode:'attack'};});return o;}
 const humanTeams=S=>S.teams.map((t,i)=>t.cpu?-1:i).filter(i=>i>=0);
 function startRoundLocal(){
+  if(G&&G.rec&&G.turn.round>1)recFrame(G);
   if(G&&G.def&&G.def.lastWave&&G.def.lastWave.r===G.turn.round&&!G.def.lastWave.shown){G.def.lastWave.shown=1;setTimeout(()=>{sfx('alert');toast(`第${G.def.lastWave.i}波：トリオン兵が${G.def.lastWave.n}体出現！`);},400);}
   const alive=aliveTeams(G);
   LOCAL={humans:humanTeams(G).filter(i=>alive[i]),idx:0,orders:{}};
@@ -1910,7 +1946,8 @@ function judgeOrder(){
 }
 function localStep(){
     aimAll(G);ui.fxAt=Date.now();
-    const done=stepExec(G);playEvents(G,viewTeam());opReport(G,viewTeam());
+    const done=stepExec(G);if(G.rec)recFrame(G);playEvents(G,viewTeam());opReport(G,viewTeam());
+    if(myWiped()&&!G.wipeNote){G.wipeNote=1;setTimeout(()=>{sfx('lose');toast('部隊が全滅しました。ここからは全員が見える観戦モードです');},300);}
     if(done){judgeOrder();endExec(G);if(G.status==='play'){startRoundLocal();return;}}
     else{
       {const pt=G.teams.find(t=>t.pc);if(pt){for(const e of G.lastEv){if(e.a===pt.pc&&!e.bleed){ui.pcAtk=(ui.pcAtk||0)+1;const o=pt.order;if(o&&o.target===e.v)ui.pcAtkT=(ui.pcAtkT||0)+1;const po=pt.uo&&pt.uo[pt.pc];if(po&&po.type==='target'&&po.id===e.v)ui.pcAtkU=(ui.pcAtkU||0)+1;}}}}
@@ -1924,11 +1961,22 @@ function localStep(){
 
 /* ---------- view helpers ---------- */
 const myTeam=()=>G&&G.teams?G.teams.findIndex(t=>t.uid===ME):-1;
+function myWiped(){if(MODE!=='local'||!G||!G.units)return false;const h=humanTeams(G);return h.length>0&&h.every(t=>!G.units.some(u=>u.team===t&&!u.out));}
 function viewTeam(){
-  if(G.status==='over')return -1;
+  if(MODE==='replay'||G.status==='over')return -1;
   if(MODE==='online')return myTeam();
+  if(myWiped())return -1;
   if(G.phase==='plan'&&PLAN)return PLAN.team;
   const h=humanTeams(G);return h.length===1?h[0]:-1;
+}
+function skipToEnd(){
+  if(MODE!=='local'||!G||G.status!=='play')return;
+  session++;clearTimeout(lTimer);lTimer=null;PLAN=null;let g=0;
+  while(G.status==='play'&&g++<8000){
+    if(G.phase==='plan'){const o={};G.teams.forEach((t,i)=>{if(t.dummy||!G.units.some(u=>u.team===i&&!u.out))return;cpuOperator(G,i);Object.assign(o,cpuPlan(G,i));});startExec(G,o);aimAll(G);}
+    else{const dn=stepExec(G);if(G.rec)recFrame(G);if(dn){endExec(G);if(G.rec&&G.status==='play')recFrame(G);}else aimAll(G);}
+  }
+  ui.fxAt=0;render();
 }
 
 /* ================= render ================= */
@@ -1945,6 +1993,9 @@ function render0(){
   if(SCREEN==='local')return renderLocalSetup();
   if(SCREEN==='league')return renderLeague();
   if(SCREEN==='rp')return renderRP();
+  if(SCREEN==='agent')return renderAgent();
+  if(SCREEN==='lookedit')return renderLookEdit();
+  if(SCREEN==='replays')return renderReplays();
   if(SCREEN==='dex')return renderDex();
   if(SCREEN==='save')return renderSave();
   if(SCREEN==='prep')return renderPrep();
@@ -1991,12 +2042,16 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
  'ネット対戦では作戦タイムに制限時間（2分か3分、時間切れでその時点の作戦で決定）。交戦は1手番3秒で、一時停止は1試合ごとの持ち時間（30〜90秒）を使い切るまで。CPU戦は作戦の時間制限をなし・2分・3分から選べる。',
  '建物の破壊：メテオラ・擲弾銃・サラマンダー・トマホークなどの炸裂弾は、着弾点と周り8マスの建物を削る（1段あたり耐久8）。削りきると1段低くなり、崩れきると瓦礫（移動コスト+1）。足場や射線が変わる。マップは市街地・河川敷・工業地区・高層ビル街・住宅地・港湾地区・郊外の公園の7つ。',
  '防衛任務：B級以上。波ごとに現れるトリオン兵（フィッチ・シザー・ドーム・モルタ・スパイン）を全滅させれば成功。通常・強化・大規模侵攻の3段階で、倒した数で個人ポイント、初回成功でスキルポイント。',
+ '隊員ページ：自分の隊員は隊員ページの上部、ほかの隊員は部隊の詳細や自分の部隊の仲間をタップすると、隊員名・見た目・能力・トリガー構成の順で見られる。自分の見た目は「見た目を変える」で肌・髪型・髪の色・目・口もと・小物・隊服を選べる（隊服は部隊でおそろい）。ほかの隊員の見た目は名前から自動で決まる。',
+ '仲間の成長：同じ部隊の仲間（自分以外）は、試合ごとに個人ポイントを得る（ランク戦：出場+40・撃破1人+60・生存+40・部隊が最多得点+40、防衛任務はその半分ほど）。ポイントに応じてスキルを覚え、技術・回避が伸びる。隊員ページで確認できる。NPC部隊の隊員は成長しない。',
+ '自分の部隊が全滅したあとも試合が続くときは、全員が見える観戦モードになり、「結果まで飛ばす」で最後まで一気に進められる（この端末の試合のみ。ネット対戦は自分の部隊の視点のまま）。',
+ 'リプレイ：自分が出たランク戦（昇格戦・CPUに任せた試合を含む）と防衛任務を直近8試合まで自動保存。隊員ページかランク戦の画面の「リプレイ」から、全体を見渡す視点で再生・一時停止・手番送り・ラウンド移動・倍速で見られる。',
  'セーブデータはホームの「セーブデータ」からコードで書き出し・読み込みできる。'])}
 </details>`;
 }
 function renderHome(){
   const on=CAP==='ok';
-  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v5.4）</p>
+  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v5.8）</p>
   <div class="row" style="margin:-10px 0 16px">${soundUI()}<button class="opt" type="button" data-a="savescr">セーブデータ</button><button class="opt" type="button" data-a="dex">トリガー性能</button></div>
   <div class="card tutc"><h2>はじめての方へ</h2><p class="muted small" style="margin-top:0">基本編：隊員の選び方・移動・扇の向け方・交戦（約3分）。応用編：トリオン、エスクードの壁、グラスホッパーの跳躍、オペレーターのスキャン、仲間への指示（約5分）。</p><div class="row"><button class="btn" type="button" data-a="tutorial">基本編</button><button class="btn ghost" type="button" data-a="tutorial2">応用編</button></div></div>
   <div class="card mine"><h2>ボーダー隊員になる</h2><p class="muted small" style="margin-top:0">自分がなりきる隊員を1人作り、C級（訓練生）かB級から始めて、部隊でランク戦を戦います。自分の1人だけを操作し、仲間はCPUが動きます。</p><button class="btn" type="button" data-a="rp">隊員ページへ</button></div>
@@ -2268,6 +2323,7 @@ function updateUnits(S,vt,o){
   }
 }
 function showBanner(big,small){
+  if(MODE==='replay'&&!(RP&&RP.play))return;
   sfx('round');
   const b=isBM()?document.getElementById('bmView'):document.getElementById('board');if(!b)return;
   b.querySelectorAll('.banner').forEach(x=>x.remove());
@@ -2533,6 +2589,7 @@ function panelHTML(vt){
   return s;
 }
 function renderOver(){
+  if(G&&G.rec&&!G.rec.saved){G.repId=recSave(G);}
   if(G&&!G.sndOver){G.sndOver=1;const mt=G.teams.findIndex(t=>t.pc||(!t.cpu&&MODE==='local'&&humanTeams(G).length===1)||t.uid===ME);if(mt>=0&&!G.tut){const best=Math.max(...G.teams.map(t=>t.score));setTimeout(()=>sfx(G.teams[mt].score>=best&&best>0?'win':'lose'),200);}else if(G.tut)setTimeout(()=>sfx('win'),200);}
   if(G.tut){TUT=null;app.innerHTML=`<div class="home"><h1 style="font-size:30px">チュートリアル完了</h1><p class="sub">${G.teams[0].pc?'応用編の試合が終わりました。トリオン・壁・跳躍・スキャン・指示を使いこなしましょう。':'標的を倒しました。これで基本の操作はばっちりです。'}</p><div class="card"><p class="small" style="margin:0">次は「ボーダー隊員になる」で自分の隊員を作り、防衛任務やランク戦に挑戦してみましょう。応用編では壁・跳躍・スキャン・指示・ルート描画を練習できます。</p></div><button class="btn" type="button" data-a="home">ホームへ</button></div>`;return;}
   if(G.def){app.innerHTML=defResultHTML();return;}
@@ -2549,7 +2606,7 @@ function renderOver(){
   const rank=G.teams.map((t,i)=>({...t,i,alive:G.units.filter(u=>u.team===i&&!u.out).length})).sort((a,b)=>b.score-a.score);
   app.innerHTML=`<div class="home"><h1 style="font-size:34px">試合終了</h1><p class="sub">${esc(MAPS[G.mapId].n)}／${G.turn.round}ラウンド</p>${pcLine}
   <ol class="result">${rank.map(t=>`<li><span><span class="dot" style="--c:${tc(t.i)}"></span> ${esc(t.name)} <span class="muted small">生存${t.alive}</span></span><b>${t.score}点</b></li>`).join('')}</ol>
-  <div class="row" style="margin-top:16px">${LWATCH?'<button class="btn" type="button" data-a="lgback">ランク戦に戻る</button>':`<button class="btn" type="button" data-a="home">ホームへ</button>${MODE==='local'?'<button class="btn ghost" type="button" data-a="rematch">同じ部隊でもう一戦</button>':''}`}</div>
+  <div class="row" style="margin-top:16px">${LWATCH?'<button class="btn" type="button" data-a="lgback">ランク戦に戻る</button>'+(G.repId?`<button class="btn ghost" type="button" data-a="rpopen" data-v="${G.repId}">リプレイを見る</button>`:''):`<button class="btn" type="button" data-a="home">ホームへ</button>${MODE==='local'?'<button class="btn ghost" type="button" data-a="rematch">同じ部隊でもう一戦</button>':''}`}</div>
   <div class="log card" style="margin-top:16px"><b>戦闘記録</b><ol>${G.log.slice().reverse().map(l=>`<li><span class="muted">R${l.r}</span> ${esc(l.t)}</li>`).join('')}</ol></div></div>`;
 }
 
@@ -2677,9 +2734,10 @@ function joyLabel(){
   el.innerHTML=`<b>${slot==='m'?'メイン':'サブ'}</b> ${esc(si.info||si.name)}`;
 }
 function bmDock(){
+  if(MODE==='replay'){replayDock();return;}
   const own=G.units.filter(u=>!u.out&&canCtrl(u)),sel=ui.sel&&uById(G,ui.sel);
   const mates=G.units.filter(u=>!u.out&&G.teams[u.team].pc&&own.some(o=>o.team===u.team)&&!canCtrl(u));
-  document.getElementById('bmUnits').innerHTML=(own.length?own.map(u=>{const pct=u.hp/u.hpMax;return `<button class="bmu${ui.sel===u.id?' on':''}" type="button" data-a="sel" data-v="${u.id}" style="--c:${tc(u.team)}"><b>${esc(u.name)}</b><i><u style="width:${pct*100}%;background:${pct>0.6?'#3DBE7A':pct>0.3?'#E3B23C':'#E5533F'}"></u></i><i class="tri"><u style="width:${u.triMax?Math.round((u.tri||0)/u.triMax*100):0}%"></u></i><small>${esc(TR[mainK(u)].n)}／${esc(TR[subK(u)].n)}　T${Math.floor(u.tri||0)}${u.leak>0?`<span class="lk"> 漏出−${u.leak.toFixed(1)}</span>`:''}</small></button>`;}).join(''):`<p class="chint" style="padding:6px">${MODE==='online'&&myTeam()<0?'観戦中':'操作できる隊員はいません'}</p>`)+mates.map(u=>{const pct=u.hp/u.hpMax,cap=G.teams[u.team].pc&&leaderOf(G,u.team)&&leaderOf(G,u.team).id===G.teams[u.team].pc,uo=uoOf(G,u);const lab=uo?({pos:'地点へ',follow:'集合',target:'敵を狙う',hold:'待機',tac:'作戦'}[uo.type]||''):'仲間（CPU）';
+  document.getElementById('bmUnits').innerHTML=(own.length?own.map(u=>{const pct=u.hp/u.hpMax;return `<button class="bmu${ui.sel===u.id?' on':''}" type="button" data-a="sel" data-v="${u.id}" style="--c:${tc(u.team)}"><b>${esc(u.name)}</b><i><u style="width:${pct*100}%;background:${pct>0.6?'#3DBE7A':pct>0.3?'#E3B23C':'#E5533F'}"></u></i><i class="tri"><u style="width:${u.triMax?Math.round((u.tri||0)/u.triMax*100):0}%"></u></i><small>${esc(TR[mainK(u)].n)}／${esc(TR[subK(u)].n)}　T${Math.floor(u.tri||0)}${u.leak>0?`<span class="lk"> 漏出−${u.leak.toFixed(1)}</span>`:''}</small></button>`;}).join(''):(myWiped()&&G.status==='play'?`<div class="spec"><p class="chint" style="margin:0 0 6px"><b>部隊が全滅しました</b>　観戦モード（全員が見えます）</p><button class="btn sm" type="button" data-a="skipend">結果まで飛ばす</button></div>`:`<p class="chint" style="padding:6px">${MODE==='online'&&myTeam()<0?'観戦中':'操作できる隊員はいません'}</p>`))+mates.map(u=>{const pct=u.hp/u.hpMax,cap=G.teams[u.team].pc&&leaderOf(G,u.team)&&leaderOf(G,u.team).id===G.teams[u.team].pc,uo=uoOf(G,u);const lab=uo?({pos:'地点へ',follow:'集合',target:'敵を狙う',hold:'待機',tac:'作戦'}[uo.type]||''):'仲間（CPU）';
     return `<${cap?'button type="button" data-a="cmdpick" data-v="'+u.id+'"':'div'} class="bmu mate${ui.cmdUnit===u.id?' on':''}" style="--c:${tc(u.team)}"><b>${esc(u.name)}</b><i><u style="width:${pct*100}%;background:${pct>0.6?'#3DBE7A':pct>0.3?'#E3B23C':'#E5533F'}"></u></i><small>${esc(lab)}</small></${cap?'button':'div'}>`;}).join('');
   let c='';
   if(sel&&canCtrl(sel)){
@@ -2689,7 +2747,7 @@ function bmDock(){
     c+=faButton(G,sel,'opt bmmini');
     const lf=ui.dslot==='s'?'ls':'lm',side=ui.dslot==='s'?sel.sub:sel.main,kk=ui.dslot==='s'?subK(sel):mainK(sel);
     if((TR[kk].type==='shot'||TR[kk].type==='snipe')&&side.includes('lead'))c+=`<button class="opt bmmini" type="button" data-a="lead" data-v="${ui.dslot==='s'?'s':'m'}" aria-pressed="${!!sel[lf]}">鉛弾：${sel[lf]?'オン':'オフ'}</button>`;
-  }else c+=`<p class="chint" style="margin:4px 0 8px">隊員カードをタップ → 右のスティックで扇を動かす</p>`;
+  }else if(!myWiped())c+=`<p class="chint" style="margin:4px 0 8px">隊員カードをタップ → 右のスティックで扇を動かす</p>`;
   if(ui.cmdUnit){const mu=uById(G,ui.cmdUnit);if(mu&&!mu.out){const others=G.units.filter(x=>!x.out&&x.team===mu.team&&x.id!==mu.id);
     c=`<div class="cmdbox"><p class="chint" style="margin:0 0 4px"><b>${esc(mu.name)}</b>への指示${ui.cmdMode==='pos'?'：盤面をタップして地点を選択':ui.cmdMode==='target'?'：狙う敵をタップ':''}</p><div class="crow">
       <button class="opt" type="button" data-a="cmdmode" data-v="pos" aria-pressed="${ui.cmdMode==='pos'}">この地点へ</button>
@@ -2745,10 +2803,11 @@ function bmFloat(){
 function renderBattle(){
   const vt=viewTeam(),o=boardOpts(vt);
   if(app.dataset.view!=='bm'){app.dataset.view='bm';app.innerHTML=BM_SHELL();bmBind();CAM.init=false;}
+  app.classList.toggle('rpmode',MODE==='replay'||myWiped());
   const scores=G.teams.map((t,i)=>`<span><span class="dot" style="--c:${tc(i)}"></span>${t.score}</span>`).join('');
   const chip=G.phase==='exec'?`<span class="chip" style="--c:var(--btn);color:var(--btnink)">交戦 ${G.exec?G.exec.tick+'/'+G.exec.maxT:''}</span>`:PLAN&&PLAN.team>=0?`<span class="chip" style="--c:${tc(PLAN.team)}">作戦</span>`:`<span class="chip" style="--c:var(--muted)">作戦</span>`;
-  const nb=G.phase==='exec'&&!(MODE==='local'&&(ui.paused||SPEED==='step'))&&ui.tickAt?Math.min(1,(Date.now()-ui.tickAt)/(MODE==='local'?SPEED:TICK_ONLINE)):null;
-  document.getElementById('bmTop').innerHTML=`<span class="rd">R${G.turn.round}/${G.maxr||MAXR}</span>${chip}${G.cond&&G.cond!=='clear'?`<span class="chip" style="--c:var(--muted)">${esc(CONDS[G.cond].n)}</span>`:''}<span class="scores">${G.def?`<span class="chip" style="--c:var(--t1)">第${G.def.next}/${G.def.waves.length}波・残り${G.units.filter(u=>u.team===1&&!u.out).length}体</span>`:scores}</span>${planLeft()!=null?`<span class="chip ptimer${planLeft()<=30?' low':''}" id="planTimer">残り ${fmtSec(planLeft())}</span>`:''}<span style="margin-left:auto"></span><button class="opt" type="button" data-a="camfit" aria-label="全体を表示">全体</button><button class="opt" type="button" data-a="sheet" aria-pressed="${!!ui.sheet}">詳細</button><button class="opt" type="button" data-a="home">${MODE==='online'?'退出':'終了'}</button>${nb!=null?`<div class="nextbar bmnb"><b style="animation-duration:${MODE==='local'?SPEED:TICK_ONLINE}ms;animation-delay:-${Date.now()-ui.tickAt}ms"></b></div>`:''}`;
+  const nb=MODE!=='replay'&&G.phase==='exec'&&!(MODE==='local'&&(ui.paused||SPEED==='step'))&&ui.tickAt?Math.min(1,(Date.now()-ui.tickAt)/(MODE==='local'?SPEED:TICK_ONLINE)):null;
+  document.getElementById('bmTop').innerHTML=`<span class="rd">R${G.turn.round}/${G.maxr||MAXR}</span>${chip}${G.cond&&G.cond!=='clear'?`<span class="chip" style="--c:var(--muted)">${esc(CONDS[G.cond].n)}</span>`:''}<span class="scores">${G.def?`<span class="chip" style="--c:var(--t1)">第${G.def.next}/${G.def.waves.length}波・残り${G.units.filter(u=>u.team===1&&!u.out).length}体</span>`:scores}</span>${planLeft()!=null?`<span class="chip ptimer${planLeft()<=30?' low':''}" id="planTimer">残り ${fmtSec(planLeft())}</span>`:''}<span style="margin-left:auto"></span><button class="opt" type="button" data-a="camfit" aria-label="全体を表示">全体</button><button class="opt" type="button" data-a="sheet" aria-pressed="${!!ui.sheet}">詳細</button><button class="opt" type="button" data-a="home">${MODE==='online'?'退出':MODE==='replay'?'閉じる':'終了'}</button>${nb!=null?`<div class="nextbar bmnb"><b style="animation-duration:${MODE==='local'?SPEED:TICK_ONLINE}ms;animation-delay:-${Date.now()-ui.tickAt}ms"></b></div>`:''}`;
   const bEl=document.getElementById('board');bEl.style.width=(N*CELL)+'px';bEl.style.height=(N*CELL)+'px';
   {const s=ui.sel&&uById(G,ui.sel);o.drag=false;}
   updateBoard(bEl,G,vt,o);
@@ -2941,7 +3000,7 @@ function nextGrowth(pts){const n=GROWTH.find(([p])=>pts<p);return n?`${n[0]}pt�
 function withGrowth(m,pts){const g=growthOf(pts);return {...m,TEC:Math.min(9,m.TEC+g.TEC),EVA:Math.min(9,m.EVA+g.EVA)};}
 function autoSkills(m,pts){let sp=spOf(pts);const out=[];for(const id of SK_PRI[posOf(m)]||SK_PRI['サポート']){const c=SKILLS[id].cost;if(c<=sp){out.push(id);sp-=c;}}return out;}
 const npcById=id=>id==='me'&&LEAGUE&&LEAGUE.me?{id:'me',name:LEAGUE.me.team.name,map:LEAGUE.me.map||0,tac:LEAGUE.me.team.tac,style:LEAGUE.me.pc?'あなたの所属部隊':'自分の部隊',desc:LEAGUE.me.pc?'あなたが所属している部隊。':'あなたが作った部隊。',me:true}:(NPC_TEAMS.find(t=>t.id===id)||A_TEAMS.find(t=>t.id===id));
-const npcTeam=id=>{if(id==='me'){const t=clone(LEAGUE.me.team);t.members.forEach((m,i)=>{if(i!==t.pcIdx){if(!m.sk)m.sk=autoSkills(m,npcPts(m));if(!m.grown){Object.assign(m,withGrowth(m,npcPts(m)));m.grown=1;}if(m.CMD==null)m.CMD=npcCmd(m,i===0);}});if(LEAGUE.me.pc&&PC)t.members[t.pcIdx]=pcMember(PC);return sanitizeTeam(t);}const t=npcById(id);return sanitizeTeam({id:'npc-'+id,name:t.name,tac:t.tac,op:opOfNpc(id),members:clone(t.members).map((m,i)=>withCmd(withGrowth({...m,sk:autoSkills(m,npcPts(m))},npcPts(m)),i===0))});};
+const npcTeam=id=>{if(id==='me'){const t=clone(LEAGUE.me.team);t.members.forEach((m,i)=>{if(i!==t.pcIdx){if(!(m.sk&&m.sk.length))m.sk=autoSkills(m,m.pts!=null?m.pts:npcPts(m));if(!m.grown){Object.assign(m,withGrowth(m,npcPts(m)));m.grown=1;}if(m.CMD==null)m.CMD=npcCmd(m,i===0);}});if(LEAGUE.me.pc&&PC)t.members[t.pcIdx]=pcMember(PC);return sanitizeTeam(t);}const t=npcById(id);return sanitizeTeam({id:'npc-'+id,name:t.name,tac:t.tac,op:opOfNpc(id),members:clone(t.members).map((m,i)=>withCmd(withGrowth({...m,sk:autoSkills(m,npcPts(m))},npcPts(m)),i===0))});};
 const isMeMatch=m=>m.teams.includes('me');
 let LEAGUE=null,LWATCH=null,LBUSY=false;
 const A_IDS=()=>A_TEAMS.map(t=>t.id),B_IDS=()=>NPC_TEAMS.map(t=>t.id);
@@ -3009,11 +3068,13 @@ function lgResult(S,ids){
   const alive=aliveTeams(S),n=alive.filter(Boolean).length;
   const r={pts:{},kills:{},surv:{},rounds:S.turn.round,bonus:null};
   ids.forEach((id,i)=>{const pid=S.teams[i].pcid;if(pid){const pu=uById(S,pid);r.pc={kills:(S.kills||{})[pid]||0,out:!!(pu&&pu.out),cexp:(S.cmdExp||0)+(pid.endsWith('0')?1:0)};}
+    if(id==='me')r.mates=mateListFrom(S,i);
     r.pts[id]=S.teams[i].score;r.surv[id]=S.units.filter(u=>u.team===i&&!u.out).length;r.kills[id]=S.teams[i].score-(n===1&&alive[i]?2:0);if(n===1&&alive[i])r.bonus=id;});
   return r;
 }
 function lgSimMatch(m,done){
   const S=newGame(m.teams.map(id=>({cpu:true,team:npcTeam(id)})),m.map,m.cond);S.simOps=true;
+  if(isMeMatch(m))recStart(S,{kind:m.promo?'昇格戦':'ランク戦',title:`${m.promo?'A級昇格戦':`シーズン${LEAGUE.season} ROUND ${LEAGUE.round}`}：${m.teams.map(id=>npcById(id).name).join(' vs ')}（CPU）`});
   m.teams.forEach((id,i)=>{if(id==='me'&&LEAGUE.me&&LEAGUE.me.pc)S.teams[i].pcid=`u${i}${LEAGUE.me.team.pcIdx}`;});
   const step=()=>{
     const t0=performance.now();
@@ -3021,10 +3082,10 @@ function lgSimMatch(m,done){
     while(S.status==='play'&&performance.now()-t0<25){
       if(++S.guard>6000){finish(S);break;}
       if(S.phase==='plan'){const o={};S.teams.forEach((t,i)=>{if(aliveTeams(S)[i]){cpuOperator(S,i);Object.assign(o,cpuPlan(S,i));}});startExec(S,o);aimAll(S);}
-      else if(stepExec(S))endExec(S);else aimAll(S);
+      else{const dn=stepExec(S);if(S.rec)recFrame(S);if(dn){endExec(S);if(S.rec&&S.status==='play')recFrame(S);}else aimAll(S);}
     }
     if(S.status==='play')setTimeout(step,0);
-    else{m.result=lgResult(S,m.teams);pcRecord(m.result);lgSave();done();}
+    else{m.result=lgResult(S,m.teams);pcRecord(m.result);if(S.rec)recSave(S);lgSave();done();}
   };
   step();
 }
@@ -3069,6 +3130,7 @@ function lgWatch(lk,i){
   session++;clearTimeout(lTimer);lTimer=null;resetUI();MODE='local';delete app.dataset.view;
   LWATCH={lk,i,season:LEAGUE.season,round:LEAGUE.round,phase:LEAGUE.phase,done:false};
   G=newGame(m.teams.map(id=>({cpu:id!=='me',team:npcTeam(id)})),m.map,m.cond);
+  if(isMeMatch(m))recStart(G,{kind:m.promo?'昇格戦':'ランク戦',title:`${m.promo?'A級昇格戦':`シーズン${LEAGUE.season} ROUND ${LEAGUE.round}`}：${m.teams.map(id=>npcById(id).name).join(' vs ')}`});
   m.teams.forEach((id,k)=>{if(id==='me'&&LEAGUE.me&&LEAGUE.me.pc){G.teams[k].pc=G.teams[k].pcid=`u${k}${LEAGUE.me.team.pcIdx}`;}});
   SCREEN='lgame';startRoundLocal();
 }
@@ -3157,16 +3219,15 @@ function renderLeague(){
   <h3 style="margin:8px 0">${tab}級 順位表</h3>
   <div class="card" style="padding:6px 10px"><table class="stand"><thead><tr><th>順位</th><th>部隊</th><th>得点</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
   <details class="tdesc card"><summary>ランク戦のルール</summary><p>B級は全部隊を順位で上位・中位・下位の3グループに分け、各グループの中で順位の近い3〜4部隊ずつ対戦する。A級は9部隊が順位の近い3部隊ずつ対戦する。各試合のステージと天候・時間帯はその中で一番順位の低い部隊が選ぶ。得点は撃破1点、最後の1部隊まで残れば生存点2点。B級とA級は同時に進み、全${L.maxRound}ラウンド。シーズン後、B級1位とA級9位、B級2位とA級8位がA級昇格戦を行い、挑戦者が得点で上回れば入れ替わる。部隊は3人または4人。</p></details>
-  <div class="row" style="margin-top:10px"><button class="btn ghost sm" type="button" data-a="lgreset">シーズンを最初からやり直す</button></div>`;
+  <div class="row" style="margin-top:10px"><button class="btn ghost sm" type="button" data-a="replays">リプレイ</button><button class="btn ghost sm" type="button" data-a="lgreset">シーズンを最初からやり直す</button></div>`;
 }
 
 function renderNpc(id){
   const t=npcById(id),team=npcTeam(id);
   app.innerHTML=`<div class="top"><h2>${esc(t.name)}</h2><button class="btn ghost sm" type="button" data-a="league">戻る</button></div>
   <div class="card"><p style="margin:0"><b>${esc(t.style)}</b>　<span class="muted small">得意マップ：${esc(MAPS[t.map].n)}　作戦：${esc(TAC[team.tac||'balanced'].n)}</span></p>${team.op?`<p class="small" style="margin:4px 0 0">オペレーター：<b>${esc(team.op.name)}</b> <span class="muted">情報処理${team.op.INF}・分析${team.op.ANA}・連携${team.op.LNK}</span></p>`:''}<p class="small muted" style="margin:4px 0 0">${esc(TAC[team.tac||'balanced'].d)}</p><p class="small" style="margin:6px 0 0">${esc(t.desc)}</p></div>
-  <div class="members">${team.members.map((m,i)=>`<div class="mem"><div class="memhead"><b style="font-size:17px">${esc(m.name)}${i===0?' <span class="pos">隊長</span>':''}</b><span class="pos">${posOf(m)}</span></div><p class="small" style="margin:-4px 0 8px">個人 ${npcPts(m)}pt ${rankBadge(m,npcPts(m))}${(m.se||SE_OF[m.name])?`<br><span class="sefx">サイドエフェクト：${seLabel(m.se||SE_OF[m.name])}</span><br><span class="muted">${esc(SES[m.se||SE_OF[m.name]].d)}</span>`:''}${m.sk&&m.sk.length?`<br><span class="muted">スキル：${m.sk.map(x=>SKILLS[x].n).join('・')}</span>`:''}</p>
-   <div class="tgrid"><div><h5>メイン</h5>${m.main.map(k=>`<p class="small" style="margin:3px 0">${k==='none'?'<span class="muted">—</span>':esc(TR[k].n)}</p>`).join('')}</div><div><h5>サブ</h5>${m.sub.map(k=>`<p class="small" style="margin:3px 0">${k==='none'?'<span class="muted">—</span>':esc(TR[k].n)}</p>`).join('')}</div></div>
-   <div class="abil">${hexSVG(m,'var(--hexc)',true)}<div class="stl"><div><span>行動力</span><b>${apOf(m)}</b></div><div><span>体力</span><b>${hpOf(m)}</b></div>${(()=>{const ns=[];m.main.forEach(a=>m.sub.forEach(b=>{const c=COMPS[compKey(a,b)];if(c&&!ns.includes(c.n))ns.push(c.n);}));return ns.length&&m.TEC>=COMP_TEC?`<div><span>合成弾</span><b>${ns.join('・')}</b></div>`:'';})()}</div></div></div>`).join('')}</div>`;
+  <div class="members">${team.members.map((m,i)=>{const p=npcPts(t.members[i]);return `<button class="mem memrow" type="button" data-a="agent" data-v="${id}:${i}"><span class="mav">${avatarFor(m,id,false,64)}</span><span class="mtx"><b>${esc(m.name)}</b>${i===0?' <span class="pos">隊長</span>':''} <span class="pos">${posOf(m)}</span><br><span class="small">個人 ${p}pt ${rankBadge(m,p)}</span>${(m.se||SE_OF[m.name])?`<br><span class="sefx small">${seLabel(m.se||SE_OF[m.name])}</span>`:''}<br><span class="small muted">${trigsOf(m).filter(isAtk).map(k=>TR[k].n).join('・')}</span></span><span class="mgo">›</span></button>`;}).join('')}</div>
+  <p class="small muted">隊員をタップすると隊員ページ（見た目・能力・トリガー構成）を開きます。</p>`;
 }
 
 
@@ -3179,9 +3240,39 @@ function pcLoad(){try{PC=JSON.parse(localStorage.getItem('rt-pc')||'null');}catc
 function pcSave(){try{localStorage.setItem('rt-pc',JSON.stringify(PC));}catch(e){}}
 const pcName=p=>`${p.sei} ${p.mei}`;
 function pcMember(p){const g=growthOf(Math.max(p.maxPts||4000,p.pts==null?4000:p.pts));const C=p.cls==='C';const first=p.main.find(k=>isAtk(k))||p.main[0];return {name:pcName(p),main:C?[first,'none','none','none']:p.main.slice(),sub:C?['none','none','none','none']:p.sub.slice(),T:p.T,TEC:Math.min(9,p.TEC+g.TEC),SUP:p.SUP,EVA:Math.min(9,p.EVA+g.EVA),MOB:p.MOB,CMD:Math.min(9,(p.CMD||4)+(p.cmdUp||0)),sk:(p.skills||[]).slice(),se:p.se||undefined};}
-function newPC(){const pr=PRESETS[0][0];return rollInto({se:rollSE(0.1),sei:pick(SEI),mei:pick(MEI),cls:'B',main:pr[0].slice(),sub:pr[1].slice(),rerolls:REROLLS,rec:{matches:0,kills:0,downs:0},pts:4000,maxPts:4000,skills:[],cmdExp:0,cmdUp:0,created:Date.now()});}
+function newPC(){const pr=PRESETS[0][0];const r0=hrng('n'+Date.now()+Math.random());return rollInto({look:{sk:r0(5),hs:r0(8),hc:r0(9),ey:r0(4),ec:r0(6),mo:r0(4),ac:0,uf:r0(4),uc:r0(12)},se:rollSE(0.1),sei:pick(SEI),mei:pick(MEI),cls:'B',main:pr[0].slice(),sub:pr[1].slice(),rerolls:REROLLS,rec:{matches:0,kills:0,downs:0},pts:4000,maxPts:4000,skills:[],cmdExp:0,cmdUp:0,created:Date.now()});}
 function freeAgent(){const p=pick(PRESETS)[Math.floor(Math.random()*3)];const m=rollInto({name:`${pick(SEI)} ${pick(MEI)}`.slice(0,7),main:p[0].slice(),sub:p[1].slice()});m.se=rollSE(0.15)||undefined;m.sk=autoSkills(m,npcPts(m));return {...withGrowth(m,npcPts(m)),grown:1};}
-function pcRecord(res){if(!res||!res.pc)return;pcLoad();if(!PC)return;PC.rec=PC.rec||{matches:0,kills:0,downs:0};PC.rec.matches++;PC.rec.kills+=res.pc.kills;if(res.pc.out)PC.rec.downs++;pcSave();
+
+/* ===== teammate growth ===== */
+const MATE_GAIN={rank:{base:40,kill:60,surv:40,top:40},def:{base:20,kill:30,surv:20,top:30}};
+function mateInit(m){
+  if(m.pts!=null&&m.bTEC!=null)return m;
+  if(!m.grown){const p=npcPts(m),g=growthOf(p);m.bTEC=m.TEC;m.bEVA=m.EVA;m.pts=p;m.TEC=Math.min(9,m.bTEC+g.TEC);m.EVA=Math.min(9,m.bEVA+g.EVA);m.grown=1;if(!(m.sk&&m.sk.length))m.sk=autoSkills(m,p);}
+  else{const p=m.pts!=null?m.pts:npcPts(m),g=growthOf(p);m.pts=p;m.bTEC=Math.max(1,m.TEC-g.TEC);m.bEVA=Math.max(1,m.EVA-g.EVA);if(!(m.sk&&m.sk.length))m.sk=autoSkills(m,p);}
+  m.games=m.games||0;m.kills=m.kills||0;return m;
+}
+const mateNext=m=>{const p=m.pts||0;let best=null;for(const [q,k] of GROWTH)if(q>p&&(!best||q<best[0]))best=[q,k];const sq=4000+Math.max(0,Math.floor((p-4000)/500)+1)*500;return {grow:best,sp:sq};};
+function mateGrow(list,kind){
+  if(!pcInLeague()||!list||!list.length)return [];
+  const T=LEAGUE.me.team,G0=MATE_GAIN[kind]||MATE_GAIN.rank,msgs=[];
+  for(const e of list){
+    if(e.mi===T.pcIdx)continue;const m=T.members[e.mi];if(!m)continue;mateInit(m);
+    const gain=G0.base+e.kills*G0.kill+(e.out?0:G0.surv)+(e.top?G0.top:0);
+    const old=m.pts,oldTEC=m.TEC,oldEVA=m.EVA,oldSk=(m.sk||[]).slice();
+    m.pts=old+gain;m.games++;m.kills+=e.kills;
+    const g=growthOf(m.pts);m.TEC=Math.min(9,m.bTEC+g.TEC);m.EVA=Math.min(9,m.bEVA+g.EVA);
+    m.sk=autoSkills(m,m.pts);
+    const ups=[];if(m.TEC>oldTEC)ups.push(`技術+${m.TEC-oldTEC}`);if(m.EVA>oldEVA)ups.push(`回避+${m.EVA-oldEVA}`);
+    m.sk.filter(x=>!oldSk.includes(x)).forEach(x=>ups.push(`「${SKILLS[x].n}」を習得`));
+    if(ups.length)msgs.push(`${m.name.split(' ')[0]}：${ups.join('・')}`);
+    e.gain=gain;e.name=m.name;
+  }
+  if(msgs.length){LEAGUE.me.growLog=(LEAGUE.me.growLog||[]).concat(msgs.map(s=>({at:Date.now(),s}))).slice(-8);setTimeout(()=>{sfx('chime');toast('仲間が成長！ '+msgs.join('／'));},500);}
+  lgSave();return msgs;
+}
+function mateListFrom(S,ti){const best=Math.max(...S.teams.map(t=>t.score));return S.units.filter(u=>u.team===ti).map(u=>({mi:+u.id.slice(2),kills:(S.kills||{})[u.id]||0,out:!!u.out,top:S.teams[ti].score===best&&best>0}));}
+
+function pcRecord(res){if(res&&res.mates&&!res.matesDone){res.matesDone=1;mateGrow(res.mates,'rank');}if(!res||!res.pc)return;pcLoad();if(!PC)return;PC.rec=PC.rec||{matches:0,kills:0,downs:0};PC.rec.matches++;PC.rec.kills+=res.pc.kills;if(res.pc.out)PC.rec.downs++;pcSave();
   if(res.pc.kills>=2)pcAward(1,`ランク戦で${res.pc.kills}人撃破`);
   if(!res.pc.out&&res.bonus==='me')pcAward(1,'最後まで生き残り生存点を獲得');
   pcCmdExp(1+(res.pc.cexp||0));}
@@ -3210,21 +3301,23 @@ function renderRP(){
   const pl=inL?myPlace():null;
   const teamBox=inL?`<div class="card mine"><h2>${esc(L.me.team.name)}</h2><p class="small muted" style="margin:0 0 6px">${L.me.team.pcIdx===0?'あなたが隊長':'隊員として所属'}　作戦：${esc(TAC[L.me.team.tac||'balanced'].n)}　${pl?pl.text:''}</p>
      <p class="small" style="margin:0 0 6px">オペレーター：<b>${esc((L.me.team.op||{name:'未定'}).name)}</b> <span class="muted">情報処理${(L.me.team.op||{}).INF||'-'}・分析${(L.me.team.op||{}).ANA||'-'}・連携${(L.me.team.op||{}).LNK||'-'}</span>${L.me.team.pcIdx===0?' <button class="btn ghost sm" type="button" data-a="opscout">スカウト</button>':''}</p>
-     <div style="margin:0 0 10px">${L.me.team.members.map((x,i)=>i===L.me.team.pcIdx?`<p class="small" style="margin:4px 0"><b>${esc(x.name)}（あなた）</b></p>`:`<div class="row" style="margin:4px 0"><span class="small">${esc(x.name)} <span class="muted">${posOf(x)}・${trigsOf(x).filter(isAtk).map(k=>TR[k].n).join('/')}</span>${(x.se||SE_OF[x.name])?` <span class="sefx">${esc(SES[x.se||SE_OF[x.name]].n)}</span>`:''}</span><button class="btn ghost sm" type="button" data-a="mateedit" data-v="${i}" style="margin-left:auto">トリガー</button></div>`).join('')}</div>
+     <div style="margin:0 0 10px">${L.me.team.members.map((x,i)=>i===L.me.team.pcIdx?`<p class="small" style="margin:4px 0"><b>${esc(x.name)}（あなた）</b></p>`:`<div class="row" style="margin:4px 0"><button class="mav mavbtn" type="button" data-a="agent" data-v="me:${i}" aria-label="${esc(x.name)}の隊員ページ">${avatarFor(x,'me',false,44)}</button><span class="small">${esc(x.name)} <span class="muted">${posOf(x)}・${trigsOf(x).filter(isAtk).map(k=>TR[k].n).join('/')}</span>${(x.se||SE_OF[x.name])?` <span class="sefx">${esc(SES[x.se||SE_OF[x.name]].n)}</span>`:''}<br><span class="muted">${(mateInit(x),x.pts)}pt・技術${x.TEC}・回避${x.EVA}・スキル${(x.sk||[]).length}　${x.games}試合${x.kills}撃破</span></span><button class="btn ghost sm" type="button" data-a="mateedit" data-v="${i}" style="margin-left:auto">トリガー</button></div>`).join('')}</div>
+     ${(L.me.growLog||[]).length?`<details class="tdesc" style="margin:0 0 8px"><summary>仲間の最近の成長</summary><p>${L.me.growLog.slice().reverse().map(g=>esc(g.s)).join('<br>')}</p></details>`:''}
+     <p class="small muted" style="margin:0 0 8px">仲間も試合に出るたびに個人ポイントを得て、スキルを覚え技術・回避が伸びます（出場+40、撃破+60、生存+40、部隊が最多得点+40。防衛任務は半分ほど）。</p>
      <div class="row"><button class="btn" type="button" data-a="league">ランク戦へ</button><button class="btn ghost sm" type="button" data-a="pcleave">部隊を抜ける</button></div></div>`
    :PC.cls==='C'?`<div class="card"><h2>所属部隊：なし</h2><p class="small" style="margin:0">C級（訓練生）は部隊に入れません。個人ランク戦で4000ptに届くとB級に昇格します（あと${4000-(PC.pts||1000)}pt）。</p></div>`:`<div class="card"><h2>所属部隊：なし</h2><p class="small" style="margin:0 0 10px">B級隊員として部隊に入るか、自分の部隊を作ってランク戦に出ましょう。</p><div class="row"><button class="btn" type="button" data-a="pcoffers">部隊からの勧誘を見る</button><button class="btn ghost" type="button" data-a="pccands">自分の部隊を作る</button></div></div>`;
   const rec=PC.rec||{matches:0,kills:0,downs:0};
   app.innerHTML=`<div class="top"><h2>ボーダー隊員</h2><button class="btn ghost sm" type="button" data-a="home">戻る</button></div>
-  <div class="card"><div class="memhead"><b style="font-size:20px">${esc(pcName(PC))}</b><span class="pos">${PC.cls==='C'?'C級（訓練生）':'B級'}　${posOf(m)}</span></div>${PC.se?`<p class="small" style="margin:6px 0 0"><span class="sefx">サイドエフェクト：${seLabel(PC.se)}</span>　<span class="muted">${esc(SES[PC.se].d)}</span></p>`:''}${PC.borrow?`<p class="small" style="margin:4px 0 0">見取り稽古で借りているスキル：${esc(SKILLS[PC.borrow].n)}（次の個人ランク戦のみ）</p>`:''}
-   <div class="abil">${hexSVG(m,'var(--hexc)',true)}<div class="stl"><h6>個人成績</h6><div><span>個人ポイント</span><b>${PC.pts==null?4000:PC.pts}</b></div><div><span>指揮</span><b>${m.CMD}</b></div><div><span>指揮の経験</span><b>${PC.cmdExp||0}/${CMD_STEP}</b></div><div><span>ランク戦</span><b>${rec.matches}試合</b></div><div><span>撃破</span><b>${rec.kills}</b></div><div><span>被撃破</span><b>${rec.downs}</b></div><h6>能力</h6><div><span>行動力</span><b>${apOf(m)}</b></div><div><span>体力</span><b>${hpOf(m)}</b></div></div></div>
-   <div class="tgrid"><div><h5>メイン</h5>${m.main.map(k=>`<p class="small" style="margin:3px 0">${k==='none'?'<span class="muted">—</span>':esc(TR[k].n)}</p>`).join('')}</div><div><h5>サブ</h5>${m.sub.map(k=>`<p class="small" style="margin:3px 0">${k==='none'?'<span class="muted">—</span>':esc(TR[k].n)}</p>`).join('')}</div></div>
-   ${PC.cls==='C'?'<p class="small" style="color:var(--t1);margin:8px 0 0">C級の間はメインの1つ目のトリガーだけ使えます。</p>':''}<p class="small" style="margin:8px 0">スキル：${(PC.skills||[]).length?(PC.skills||[]).map(x=>SKILLS[x].n).join('・'):'なし'}</p>
-   <div class="row"><button class="btn ghost sm" type="button" data-a="pcedit">トリガー構成を変える</button><button class="btn ghost sm" type="button" data-a="dex">トリガー性能を見る</button></div></div>
+  ${agentCardHTML({...m,sk:(PC.skills||[]).slice(),se:PC.se},{isPC:true,tid:pcInLeague()?'me':null,team:pcInLeague()?LEAGUE.me.team.name:'',capt:pcInLeague()&&LEAGUE.me.team.pcIdx===0,cls:PC.cls==='C'?'C級（訓練生）':(pcInLeague()&&LEAGUE.meIn==='A'?'A級':'B級'),pts:PC.pts==null?4000:PC.pts,
+    lookBtn:`<div class="row" style="justify-content:center;margin:-2px 0 4px"><button class="btn ghost sm" type="button" data-a="lookedit">見た目を変える</button></div>`,
+    extraStats:`<div><span>指揮の経験</span><b>${PC.cmdExp||0}/${CMD_STEP}</b></div><div><span>ランク戦</span><b>${rec.matches}試合</b></div><div><span>撃破</span><b>${rec.kills}</b></div><div><span>被撃破</span><b>${rec.downs}</b></div>`,
+    foot:`${PC.borrow?`<p class="small" style="margin:6px 0 0">見取り稽古で借りているスキル：${esc(SKILLS[PC.borrow].n)}（次の個人ランク戦のみ）</p>`:''}${PC.cls==='C'?'<p class="small" style="color:var(--t1);margin:8px 0 0">C級の間はメインの1つ目のトリガーだけ使えます。</p>':''}<div class="row" style="margin-top:8px"><button class="btn ghost sm" type="button" data-a="pcedit">トリガー構成を変える</button><button class="btn ghost sm" type="button" data-a="dex">トリガー性能を見る</button></div>`})}
   ${defCard()}
   <div class="card"><h2>個人ランク戦</h2><p style="margin:0 0 4px"><b style="font-size:20px">${PC.pts==null?4000:PC.pts}</b>pt　<span class="muted small">スキルポイント ${pcSP()}　${(()=>{const r=posRanks(PC.pts==null?4000:PC.pts),l=r.out[r.myPos];return l?`${r.myPos} ${l.findIndex(a=>a.me)+1}位`:'';})()}</span></p>
    <p class="small" style="margin:0 0 4px">ポイントによる成長：技術+${growthOf(Math.max(PC.maxPts||4000,PC.pts||4000)).TEC}・回避+${growthOf(Math.max(PC.maxPts||4000,PC.pts||4000)).EVA}　<span class="muted">次：${nextGrowth(Math.max(PC.maxPts||4000,PC.pts||4000))}</span></p>
    <p class="small muted" style="margin:0 0 10px">スキルポイントは個人ポイント500ptごと、チームランク戦での活躍（2人以上撃破、生き残って生存点、シーズン終了時の順位）でも手に入ります。</p>
    ${(PC.spLog||[]).length?`<details class="tdesc"><summary>最近もらったスキルポイント</summary><p>${PC.spLog.slice().reverse().map(x=>`+${x.n}　${esc(x.why)}`).join('<br>')}</p></details>`:''}
+   <div class="row"><button class="btn ghost sm" type="button" data-a="replays">リプレイを見る（${repLoad().length}）</button></div>
    <div class="row"><button class="btn" type="button" data-a="duel">個人ランク戦へ</button><button class="btn ghost" type="button" data-a="skills">スキルを取得する${pcSP()>0?`（${pcSP()}）`:''}</button></div></div>
   ${teamBox}
   <div class="row" style="margin-top:6px"><button class="btn ghost sm" type="button" data-a="pcdel">隊員を作り直す</button></div>`;
@@ -3237,6 +3330,7 @@ function renderMateEdit(){
     <div><h5>サブ</h5>${[0,1,2,3].map(j=>`<label class="tslot"><span>${j+1}</span>${selHTML('sub',0,j,m.sub[j]).replace('data-b="sub"','data-b="msub"')}</label>`).join('')}</div></div>
    ${optBad(m).map(t=>`<p class="small" style="color:var(--t1);margin:-6px 0 8px">${esc(t)}</p>`).join('')}
    <div class="abil">${hexSVG(m,'var(--hexc)',true)}<div class="stl"><div><span>攻撃</span><b>${atkOf(m)}</b></div><div><span>防御</span><b>${defBase(m)}</b></div><div><span>行動力</span><b>${apOf(m)}</b></div><div><span>体力</span><b>${hpOf(m)}</b></div></div></div>
+   ${m.pts!=null?`<p class="small" style="margin:4px 0 8px">個人 <b>${m.pts}</b>pt　${m.games||0}試合・${m.kills||0}撃破<br><span class="muted">スキル：${(m.sk||[]).map(x=>SKILLS[x].n).join('・')||'なし'}<br>次の成長：${(()=>{const n=mateNext(m);return `${n.sp}ptでスキルポイント+1${n.grow?`、${n.grow[0]}ptで${n.grow[1]==='TEC'?'技術':'回避'}+1`:''}`;})()}</span></p>`:''}
    <button class="btn ghost sm" type="button" data-a="dex" style="margin:4px 0 8px">トリガー性能の一覧を見る</button>
    <details class="tdesc"><summary>トリガーの説明</summary><p>${trigsOf(m).map(k=>`<b>${TR[k].n}</b>：${TR[k].d}`).join('<br>')||'トリガーが入っていません'}</p></details></div>
   <div class="row" style="margin-top:14px"><button class="btn" type="button" data-a="matesave" style="min-width:12em">保存する</button></div>`;
@@ -3588,20 +3682,20 @@ const SKK=()=>Object.keys(SKILLS),SEK=()=>Object.keys(SES),IDS=()=>[...B_IDS(),.
 const skMask=l=>(l||[]).reduce((m,k)=>{const i=SKK().indexOf(k);return i>=0?m+Math.pow(2,i):m;},0);
 const skList=m=>SKK().filter((k,i)=>Math.floor(m/Math.pow(2,i))%2===1);
 const tIdx=k=>Math.max(0,ALLT.indexOf(k)),tKey=i=>ALLT[i]||'none';
-function wMem(w,m){w.s(m.name);['T','TEC','SUP','EVA','MOB','CMD'].forEach(k=>w.u(m[k]||(k==='CMD'?4:0)));for(let j=0;j<4;j++)w.u(tIdx((m.main||[])[j]));for(let j=0;j<4;j++)w.u(tIdx((m.sub||[])[j]));w.u(m.se?SEK().indexOf(m.se)+1:0);w.u(skMask(m.sk));w.u(m.grown?1:0);}
-function rMem(r){const m={name:r.s()};['T','TEC','SUP','EVA','MOB','CMD'].forEach(k=>m[k]=r.u());m.main=[0,1,2,3].map(()=>tKey(r.u()));m.sub=[0,1,2,3].map(()=>tKey(r.u()));const se=r.u();if(se)m.se=SEK()[se-1];m.sk=skList(r.u());if(r.u())m.grown=1;return m;}
+function wMem(w,m){w.s(m.name);['T','TEC','SUP','EVA','MOB','CMD'].forEach(k=>w.u(m[k]||(k==='CMD'?4:0)));for(let j=0;j<4;j++)w.u(tIdx((m.main||[])[j]));for(let j=0;j<4;j++)w.u(tIdx((m.sub||[])[j]));w.u(m.se?SEK().indexOf(m.se)+1:0);w.u(skMask(m.sk));w.u(m.grown?1:0);w.u(m.pts!=null?m.pts+1:0);w.u(m.bTEC||0);w.u(m.bEVA||0);w.u(m.games||0);w.u(m.kills||0);}
+function rMem(r,ver){const m={name:r.s()};['T','TEC','SUP','EVA','MOB','CMD'].forEach(k=>m[k]=r.u());m.main=[0,1,2,3].map(()=>tKey(r.u()));m.sub=[0,1,2,3].map(()=>tKey(r.u()));const se=r.u();if(se)m.se=SEK()[se-1];m.sk=skList(r.u());if(r.u())m.grown=1;if(ver>=3){const p=r.u();if(p)m.pts=p-1;const bt=r.u(),be=r.u();if(bt)m.bTEC=bt;if(be)m.bEVA=be;m.games=r.u();m.kills=r.u();}return m;}
 const idI=id=>id==='me'?0:IDS().indexOf(id)+1,idK=i=>i===0?'me':IDS()[i-1];
 function wMatches(w,ms){w.u(ms.length);for(const m of ms){w.u(m.map||0);w.u(CONDK.indexOf(m.cond||'clear'));const r=m.result;w.u(r?1:0);if(r){for(const id of m.teams){w.u(r.pts[id]);w.u(r.kills[id]);w.u(r.surv[id]);}w.u(r.bonus?m.teams.indexOf(r.bonus)+1:0);w.u(r.rounds||0);}}}
 function packSave(){
   pcLoad();if(!LEAGUE)lgLoad();
-  const w=bW();w.u(2);
+  const w=bW();w.u(4);
   // options
   w.u((SND.on?1:0)+(BGM.on?2:0));w.u(Math.round(SND.vol*10));w.u(Math.round(BGM.vol*100));w.u([0,120,180].indexOf(OPTS.planSec||0));
   // PC
   w.u(PC?1:0);
   if(PC){w.s(PC.sei);w.s(PC.mei);w.u(PC.cls==='C'?1:0);['T','TEC','SUP','EVA','MOB','CMD'].forEach(k=>w.u(PC[k]||0));for(let j=0;j<4;j++)w.u(tIdx(PC.main[j]));for(let j=0;j<4;j++)w.u(tIdx(PC.sub[j]));
     w.u(PC.se?SEK().indexOf(PC.se)+1:0);w.u(skMask(PC.skills));w.u(PC.pts==null?4000:PC.pts);w.u(PC.maxPts||4000);w.u(PC.bonusSP||0);w.u(PC.cmdExp||0);w.u(PC.cmdUp||0);w.u(PC.rerolls||0);
-    const rc=PC.rec||{},du=PC.duel||{},df=PC.def||{};w.u(rc.matches);w.u(rc.kills);w.u(rc.downs);w.u(du.w);w.u(du.l);w.u(du.d);w.u(df.runs);w.u(df.kills);w.u(Object.keys(df.clears||{}).reduce((m,k)=>m+Math.pow(2,+k),0));}
+    const rc=PC.rec||{},du=PC.duel||{},df=PC.def||{};w.u(rc.matches);w.u(rc.kills);w.u(rc.downs);w.u(du.w);w.u(du.l);w.u(du.d);w.u(df.runs);w.u(df.kills);w.u(Object.keys(df.clears||{}).reduce((m,k)=>m+Math.pow(2,+k),0));const lk=PC.look||lookOf(pcName(PC));['sk','hs','hc','ey','ec','mo','ac','uf','uc'].forEach(k=>w.u(lk[k]||0));}
   // league
   const L=LEAGUE;w.u(L?1:0);
   if(L){w.u(L.season);w.u(L.round);w.u(L.phase==='promo'?1:0);w.u(L.meIn==='A'?1:0);w.u(L.awarded?1:0);
@@ -3617,14 +3711,14 @@ function packSave(){
   return 'RW2:'+b64u(new Uint8Array(w.a));
 }
 function unpackSave(code){
-  const r=bR(ub64u(code.slice(4)));if(r.u()!==2)throw 0;
+  const r=bR(ub64u(code.slice(4)));const ver=r.u();if(ver<2||ver>4)throw 0;
   const data={};
   const sb=r.u(),vol=r.u()/10,bv=r.u()/100,pl=r.u();
   data['rt-sound']=JSON.stringify({on:!!(sb&1),vol,bgm:!!(sb&2),bvol:bv});data['rt-opts']=JSON.stringify({planSec:[0,120,180][pl]||0});
   let pc=null;
   if(r.u()){pc={sei:r.s(),mei:r.s()};pc.cls=r.u()?'C':'B';['T','TEC','SUP','EVA','MOB','CMD'].forEach(k=>pc[k]=r.u());pc.main=[0,1,2,3].map(()=>tKey(r.u()));pc.sub=[0,1,2,3].map(()=>tKey(r.u()));
     const se=r.u();if(se)pc.se=SEK()[se-1];pc.skills=skList(r.u());pc.pts=r.u();pc.maxPts=r.u();pc.bonusSP=r.u();pc.cmdExp=r.u();pc.cmdUp=r.u();pc.rerolls=r.u();
-    pc.rec={matches:r.u(),kills:r.u(),downs:r.u()};pc.duel={w:r.u(),l:r.u(),d:r.u()};const runs=r.u(),kills=r.u(),cm=r.u();pc.def={runs,kills,clears:{}};[0,1,2].forEach(i=>{if(Math.floor(cm/Math.pow(2,i))%2)pc.def.clears[i]=1;});pc.created=Date.now();
+    pc.rec={matches:r.u(),kills:r.u(),downs:r.u()};pc.duel={w:r.u(),l:r.u(),d:r.u()};const runs=r.u(),kills=r.u(),cm=r.u();pc.def={runs,kills,clears:{}};[0,1,2].forEach(i=>{if(Math.floor(cm/Math.pow(2,i))%2)pc.def.clears[i]=1;});pc.created=Date.now();if(ver>=4){pc.look={};['sk','hs','hc','ey','ec','mo','ac','uf','uc'].forEach(k=>pc.look[k]=r.u());}
     data['rt-pc']=JSON.stringify(pc);}
   if(r.u()){
     const L={v:2,season:r.u(),round:r.u(),maxRound:8,hist:[],cur:null,init:null,promo:null};L.phase=r.u()?'promo':'season';L.meIn=r.u()?'A':'B';L.awarded=!!r.u();
@@ -3632,7 +3726,7 @@ function unpackSave(code){
     const B=rd(),A=rd();L.order=B.o;L.pts=B.p;L.A={order:A.o,pts:A.p,hist:[],cur:null};
     L.me=null;
     if(r.u()){const T={id:'me-team',name:r.s(),tac:TACS[r.u()]||'balanced',pcIdx:r.u()};const fi=r.u();const me={team:T,pc:true,from:fi?IDS()[fi-1]:null,map:r.u(),cond:CONDK[r.u()]||'clear'};
-      T.op={name:r.s(),INF:r.u(),ANA:r.u(),LNK:r.u()};const n=r.u(),mates=[];for(let i=0;i<n;i++)mates.push(rMem(r));
+      T.op={name:r.s(),INF:r.u(),ANA:r.u(),LNK:r.u()};const n=r.u(),mates=[];for(let i=0;i<n;i++)mates.push(rMem(r,ver));
       const members=mates.slice();members.splice(T.pcIdx,0,pc?pcMember(pc):mates[0]);T.members=members;L.me=me;}
     // results need team counts: read lazily after reconstructing matches
     const readBlock=(teamsList)=>{const n=r.u(),out=[];for(let i=0;i<n;i++){const o={map:r.u(),cond:CONDK[r.u()]||'clear',result:null};if(r.u()){const ts=teamsList?teamsList[i]:null;const cnt=ts?ts.length:0;const res={pts:{},kills:{},surv:{},rounds:0,bonus:null};for(let j=0;j<cnt;j++){const id=ts[j];res.pts[id]=r.u();res.kills[id]=r.u();res.surv[id]=r.u();}const b=r.u();res.bonus=b?ts[b-1]:null;res.rounds=r.u();o.result=res;}out.push(o);}return out;};
@@ -3903,20 +3997,21 @@ function startDefense(lv){
   const L=DEF_LV[lv];
   G=newGame([{cpu:false,noOp:ts.solo,team:ts.team},{cpu:true,noOp:true,team:{name:'トリオン兵',tac:'rush',members:[]}}],Math.floor(Math.random()*MAPS.length),pick(['clear','clear','rain','night']));
   G.teams[0].pc=G.teams[0].pcid=`u0${ts.pcIdx}`;G.maxr=L.maxr;G.def={lv,waves:L.waves,next:0,cnt:0,num:{}};
-  defSpawn(G);SCREEN='lgame';startRoundLocal();
+  defSpawn(G);recStart(G,{kind:'防衛任務',title:`防衛任務「${L.n}」：${G.teams[0].name}`});SCREEN='lgame';startRoundLocal();
 }
 function defResultHTML(){
   const D=G.def,L=DEF_LV[D.lv],kills=G.units.filter(u=>u.team===1&&u.out).length,pcK=(G.kills||{})[G.teams[0].pcid]||0,clear=D.result==='clear';
   if(!G.recorded){G.recorded=1;pcLoad();if(PC){
     const gain=Math.round((kills*2+pcK*2+(clear?10:0))*L.mul);PC.pts=(PC.pts||4000)+gain;PC.maxPts=Math.max(PC.maxPts||4000,PC.pts);
     PC.def=PC.def||{runs:0,clears:{},kills:0};PC.def.runs++;PC.def.kills+=kills;
+    if(pcInLeague()){const ml=mateListFrom(G,0).map(e=>({...e,top:clear}));D.mateMsgs=mateGrow(ml,'def');}
     D.gain=gain;
     if(clear&&!PC.def.clears[D.lv]){PC.def.clears[D.lv]=1;pcSave();pcAward(L.sp,`防衛任務「${L.n}」を初めて成功`);}
     pcSave();pcCmdExp(1);pcSyncTeam&&pcSyncTeam();}}
   return `<div class="home"><h1 style="font-size:30px">${clear?'防衛成功':D.result==='fail'?'防衛失敗':'時間切れ'}</h1><p class="sub">防衛任務「${esc(L.n)}」　${G.turn.round}ラウンド</p>
    <div class="card"><div class="stats" style="grid-template-columns:repeat(3,1fr)"><div>撃破<b>${kills}/${D.spawned||0}</b></div><div>あなたの撃破<b>${pcK}</b></div><div>到達した波<b>${D.next}/${D.waves.length}</b></div></div>
    <p class="small" style="margin:8px 0 0">個人ポイント +${D.gain||0}${clear&&PC&&PC.def&&PC.def.clears[D.lv]?'':''}</p></div>
-   <div class="row"><button class="btn" type="button" data-a="defgo" data-v="${D.lv}">もう一度</button><button class="btn ghost" type="button" data-a="rp">隊員ページへ</button></div></div>`;
+   <div class="row"><button class="btn" type="button" data-a="defgo" data-v="${D.lv}">もう一度</button>${G.repId?`<button class="btn ghost" type="button" data-a="rpopen" data-v="${G.repId}">リプレイを見る</button>`:''}<button class="btn ghost" type="button" data-a="rp">隊員ページへ</button></div></div>`;
 }
 function defCard(){
   if(!PC)return '';
@@ -3928,8 +4023,233 @@ function defCard(){
    <p class="small muted" style="margin:6px 0 0">出撃${rec.runs}回・撃破${rec.kills}体</p></div>`;
 }
 
+
+/* ================= replays ================= */
+const REPLAY_MAX=8,REP_STATIC=['name','team','T','TEC','SUP','EVA','MOB','CMD','main','sub','se','sk','hpMax','triMax','ts'];
+const REP_DYN=['x','y','hp','tri','out','md','mr','sd','sr','mw','sw','ma','sa','fa','bag','rev','leak'];
+function recStart(S,meta){S.rec={meta,st:{},fr:[],thV:-1,wk:'',wmN:-1,dk:''};recFrame(S);}
+function recFrame(S){
+  const R=S.rec;if(!R||R.fr.length>600)return;
+  for(const u of S.units)if(!R.st[u.id]){const o={};REP_STATIC.forEach(k=>{if(u[k]!==undefined)o[k]=Array.isArray(u[k])?u[k].slice():u[k];});R.st[u.id]=o;}
+  const f={r:S.turn.round,ph:S.phase==='exec'?1:0,t:S.exec?S.exec.tick:0,mt:S.exec?S.exec.maxT:0,sc:S.teams.map(t=>t.score),
+    u:S.units.map(u=>[u.id,...REP_DYN.map(k=>{const v=u[k];return typeof v==='boolean'?(v?1:0):typeof v==='number'?Math.round(v*10)/10:(v==null?0:v);})])};
+  if(S.lastEv&&S.lastEv.length&&S.phase==='exec')f.ev=JSON.parse(JSON.stringify(S.lastEv));
+  if((S.thV||0)!==R.thV){R.thV=S.thV||0;f.th=Object.assign({},S.th||{});}
+  const wk=JSON.stringify(S.walls||{});if(wk!==R.wk){R.wk=wk;f.wl=JSON.parse(wk);}
+  const wmN=Object.keys(S.wm||{}).length;if(wmN!==R.wmN){R.wmN=wmN;f.wm=Object.assign({},S.wm||{});}
+  const dk=JSON.stringify(S.decoys||[]);if(dk!==R.dk){R.dk=dk;f.dc=JSON.parse(dk);}
+  if(S.def)f.dw=[S.def.next,S.def.waves.length];
+  R.fr.push(f);
+}
+function repLoad(){try{return JSON.parse(localStorage.getItem('rt-replays')||'[]');}catch(e){return [];}}
+function repStore(list){
+  while(list.length){try{localStorage.setItem('rt-replays',JSON.stringify(list));return true;}catch(e){list.shift();}}
+  try{localStorage.removeItem('rt-replays');}catch(e){}return false;
+}
+function recSave(S){
+  const R=S.rec;if(!R||R.saved||R.fr.length<2)return null;R.saved=true;recFrame(S);
+  const rp={id:'rp'+Date.now()+Math.floor(Math.random()*1000),at:Date.now(),meta:R.meta,mapId:S.mapId,cond:S.cond,maxr:S.maxr||MAXR,
+    teams:S.teams.map(t=>({name:t.name,score:t.score})),st:R.st,fr:R.fr,def:S.def?{n:DEF_LV[S.def.lv].n,result:S.def.result}:null};
+  const list=repLoad();list.push(rp);while(list.length>REPLAY_MAX)list.shift();repStore(list);
+  return rp.id;
+}
+let RP=null;
+function repBuild(i){
+  const R=RP.rec,f=R.fr[i];let th={},wl={},wm={},dc=[],dw=null;
+  for(let k=0;k<=i;k++){const x=R.fr[k];if(x.th)th=x.th;if(x.wl)wl=x.wl;if(x.wm)wm=x.wm;if(x.dc)dc=x.dc;if(x.dw)dw=x.dw;}
+  const units=f.u.map(a=>{const st=R.st[a[0]]||{};const u={id:a[0],...JSON.parse(JSON.stringify(st))};REP_DYN.forEach((k,j)=>{u[k]=a[j+1];});u.out=!!u.out;u.bag=!!u.bag;u.rev=!!u.rev;return u;});
+  const thN=Object.keys(th).length;
+  G={v:4,replay:true,status:'play',phase:f.ph?'exec':'plan',mapId:R.mapId,cond:R.cond,maxr:R.maxr,turn:{round:f.r},
+    teams:R.teams.map((t,i)=>({name:t.name,score:f.sc[i]||0,cpu:true,noOp:true,mem:{},tag:{},ana:{},cd:{}})),
+    units,lastEv:f.ev||[],th,thN,thV:i===0?0:R.fr.slice(0,i+1).filter(x=>x.th).length,walls:wl,wm,decoys:dc,log:[],exec:f.ph?{tick:f.t,maxT:f.mt,st:{}}:null,tc:i};
+  if(dw)G.def={next:dw[0],waves:{length:dw[1]}};
+}
+function repStart(id){
+  const rec=repLoad().find(r=>r.id===id);if(!rec){toast('リプレイが見つかりません');return;}
+  session++;clearTimeout(lTimer);lTimer=null;resetUI();delete app.dataset.view;
+  MODE='replay';RP={rec,i:0,play:false,speed:1,timer:null};repBuild(0);SCREEN='lgame';CAM.init=false;render();
+}
+function repGo(i,fx){
+  if(!RP)return;i=clamp(i,0,RP.rec.fr.length-1);RP.i=i;repBuild(i);
+  if(fx&&G.lastEv.length){ui.fxAt=Date.now();playEvents(G,-1);}else ui.fxAt=0;
+  render();
+}
+function repTick(){
+  clearTimeout(RP&&RP.timer);if(!RP||!RP.play)return;
+  if(RP.i>=RP.rec.fr.length-1){RP.play=false;render();return;}
+  repGo(RP.i+1,true);
+  const f=RP.rec.fr[RP.i];RP.timer=setTimeout(repTick,(f.ph?900:700)/RP.speed);
+}
+function repStop(){if(RP){clearTimeout(RP.timer);RP=null;}MODE=null;G=null;delete app.dataset.view;}
+function repRoundIdx(r){return RP.rec.fr.findIndex(f=>f.r===r);}
+function replayDock(){
+  const R=RP.rec,f=R.fr[RP.i],tot=R.fr.length;
+  const byTeam=R.teams.map((t,ti)=>G.units.filter(u=>u.team===ti));
+  document.getElementById('bmUnits').innerHTML=`<div class="rpteams">${byTeam.map((us,ti)=>`<div class="rpteam" style="--c:${tc(ti)}"><span class="rptn"><span class="dot" style="--c:${tc(ti)}"></span>${esc(R.teams[ti].name)} <b>${G.teams[ti].score}</b></span>${us.map(u=>{const pct=u.hpMax?u.hp/u.hpMax:0;return `<span class="rpu${u.out?' out':''}" title="${esc(u.name)}"><em>${esc(u.name.split(' ')[0].slice(0,4))}</em><i><u style="width:${u.out?0:pct*100}%;background:${pct>0.6?'#3DBE7A':pct>0.3?'#E3B23C':'#E5533F'}"></u></i></span>`;}).join('')}</div>`).join('')}</div>`;
+  const rounds=[...new Set(R.fr.map(x=>x.r))];
+  const c=`<div class="rpctl"><p class="small" style="margin:0 0 6px"><b>${esc(R.meta.title)}</b><br><span class="muted">R${f.r}${f.ph?`・交戦 ${f.t}手番`:'・作戦'}　${RP.i+1}/${tot}</span></p>
+   <input type="range" min="0" max="${tot-1}" value="${RP.i}" data-a="rpseek" aria-label="再生位置" style="width:100%">
+   <div class="row" style="margin:6px 0">
+    <button class="opt" type="button" data-a="rpround" data-v="-1" aria-label="前のラウンド">⏮</button>
+    <button class="opt" type="button" data-a="rpstep" data-v="-1" aria-label="1手番戻る">◀</button>
+    <button class="btn sm" type="button" data-a="rpplay">${RP.play?'一時停止':'再生'}</button>
+    <button class="opt" type="button" data-a="rpstep" data-v="1" aria-label="1手番進む">▶</button>
+    <button class="opt" type="button" data-a="rpround" data-v="1" aria-label="次のラウンド">⏭</button>
+   </div>
+   <div class="row"><button class="opt" type="button" data-a="rpspeed">速さ ${RP.speed}倍</button>
+    <select class="inl" data-a="rpjump" aria-label="ラウンドへ移動">${rounds.map(r=>`<option value="${r}"${r===f.r?' selected':''}>ラウンド${r}</option>`).join('')}</select>
+    <button class="opt" type="button" data-a="rpexit">閉じる</button></div></div>`;
+  document.getElementById('bmCtl').innerHTML=c;
+}
+function renderReplays(){
+  const list=repLoad().slice().reverse();
+  app.innerHTML=`<div class="top"><h2>リプレイ</h2><button class="btn ghost sm" type="button" data-a="rpback">戻る</button></div>
+  <p class="small muted" style="margin-top:-6px">自分が出たランク戦（昇格戦・CPUに任せた試合を含む）と防衛任務を、直近${REPLAY_MAX}試合まで自動で保存します。リプレイは全体を見渡す視点で、試合中は見えなかった敵の動きも見えます。</p>
+  ${list.length?list.map(r=>{const d=new Date(r.at),best=Math.max(...r.teams.map(t=>t.score));return `<div class="card mcard"><div class="row" style="justify-content:space-between"><b>${esc(r.meta.title)}</b><span class="muted small">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span></div>
+   <p class="small" style="margin:4px 0">${esc(MAPS[r.mapId].n)}・${esc(CONDS[r.cond||'clear'].n)}　${r.def?`防衛任務「${esc(r.def.n)}」：${r.def.result==='clear'?'成功':r.def.result==='fail'?'失敗':'時間切れ'}`:r.teams.map(t=>`${esc(t.name)} ${t.score}点${t.score===best&&best>0?'★':''}`).join('　')}</p>
+   <div class="row"><button class="btn sm" type="button" data-a="rpopen" data-v="${r.id}">再生する</button><button class="btn ghost sm" type="button" data-a="rpdel" data-v="${r.id}">削除</button></div></div>`;}).join(''):'<div class="card"><p class="small" style="margin:0">まだリプレイがありません。ランク戦や防衛任務に出撃すると、ここに保存されます。</p></div>'}`;
+}
+
+const AV={
+  skin:['#FBE5D6','#F4D3BC','#E8BE9F','#D6A482','#B7835F'],
+  hair:['#1D1D24','#3A2922','#6A4530','#A6744B','#CDB68C','#7E8898','#2B3D68','#8B2F33','#DADBE3'],
+  eye:['#3A2922','#2A4C7D','#2E6B4E','#82302E','#5A3E7D','#B27C1F'],
+  hs:['ショート','ツンツン','ボブ','ロング','ポニーテール','流し前髪','ベリーショート','ツインテール'],
+  ey:['まる目','つり目','たれ目','細目'],
+  mo:['笑顔','すまし','不敵','元気'],
+  ac:['なし','メガネ','ヘッドホン','ヘアピン','ばんそうこう','ゴーグル'],
+  uf:['ジャケット','ハイネック','コート','パーカー']
+};
+function avShade(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=(n>>8)&255,b=n&255;const m=x=>Math.max(0,Math.min(255,Math.round(f<0?x*(1+f):x+(255-x)*f)));return '#'+[m(r),m(g),m(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+function avatarSVG(L,o){
+  o=o||{};const uni=o.uni||'#2B6C84',acc=o.acc||'#19F5C1',id='a'+Math.random().toString(36).slice(2,8);
+  const sk=AV.skin[L.sk%AV.skin.length],hc=AV.hair[L.hc%AV.hair.length],ec=AV.eye[L.ec%AV.eye.length];
+  const skD=avShade(sk,-0.12),hcD=avShade(hc,-0.28),hcL=avShade(hc,0.25),uD=avShade(uni,-0.32),uL=avShade(uni,0.22);
+  let s=`<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" class="avatar"${o.size?` width="${o.size}" height="${Math.round(o.size*1.2)}"`:''}>`;
+  s+=`<defs><linearGradient id="${id}bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${avShade(uni,-0.55)}"/><stop offset="1" stop-color="${avShade(uni,-0.2)}"/></linearGradient><clipPath id="${id}c"><rect width="100" height="120" rx="10"/></clipPath></defs>`;
+  s+=`<g clip-path="url(#${id}c)"><rect width="100" height="120" fill="url(#${id}bg)"/>`;
+  s+=`<path d="M-5 45 L105 25 L105 33 L-5 53Z" fill="#fff" opacity=".05"/><path d="M-5 70 L105 50 L105 54 L-5 74Z" fill="#fff" opacity=".04"/>`;
+  s+=`<g transform="translate(50 70) scale(1.12) translate(-50 -66)">`;
+  // back hair
+  const hs=L.hs%8;
+  if(hs===3)s+=`<path d="M27 44 C25 70 26 96 22 112 L78 112 C74 96 75 70 73 44 Z" fill="${hcD}"/>`;
+  if(hs===2)s+=`<path d="M28 46 C27 62 28 74 31 80 L69 80 C72 74 73 62 72 46 Z" fill="${hcD}"/>`;
+  if(hs===4)s+=`<path d="M64 40 C82 44 84 62 78 84 C76 92 72 96 70 94 C74 80 74 60 62 50 Z" fill="${hcD}"/>`;
+  if(hs===7)s+=`<path d="M28 44 C14 50 12 74 18 90 C21 96 25 95 25 90 C22 76 24 60 31 52Z" fill="${hcD}"/><path d="M72 44 C86 50 88 74 82 90 C79 96 75 95 75 90 C78 76 76 60 69 52Z" fill="${hcD}"/>`;
+  // body / uniform
+  const uf=L.uf%4;
+  if(uf===3)s+=`<path d="M22 102 C24 90 36 84 50 84 C64 84 76 90 78 102 Z" fill="${uD}"/>`;
+  s+=`<path d="M6 120 C8 100 24 91 50 91 C76 91 92 100 94 120 Z" fill="${uni}"/>`;
+  s+=`<path d="M6 120 C8 100 24 91 50 91 C76 91 92 100 94 120" fill="none" stroke="${uL}" stroke-width="1.2" opacity=".6"/>`;
+  s+=`<rect x="44" y="76" width="12" height="16" rx="4" fill="${skD}"/>`;
+  if(uf===0)s+=`<path d="M40 91 L50 104 L60 91" fill="none" stroke="${uL}" stroke-width="2.2"/><line x1="50" y1="104" x2="50" y2="120" stroke="${uD}" stroke-width="1.6"/>`;
+  if(uf===1)s+=`<path d="M38 92 C38 84 42 82 50 82 C58 82 62 84 62 92 C58 95 42 95 38 92Z" fill="${uD}"/><path d="M38 92 C42 95 58 95 62 92" fill="none" stroke="${uL}" stroke-width="1"/>`;
+  if(uf===2)s+=`<path d="M38 91 L50 110 L44 120 L30 120 L28 96Z" fill="${uD}"/><path d="M62 91 L50 110 L56 120 L70 120 L72 96Z" fill="${uD}"/><path d="M42 91 L50 104 L58 91" fill="${avShade(uni,0.5)}" opacity=".85"/>`;
+  if(uf===3)s+=`<path d="M38 91 C42 98 58 98 62 91" fill="none" stroke="${uD}" stroke-width="3"/><line x1="45" y1="96" x2="44" y2="110" stroke="${uL}" stroke-width="1.2"/><line x1="55" y1="96" x2="56" y2="110" stroke="${uL}" stroke-width="1.2"/>`;
+  s+=`<path d="M24 104 l4 -4 l4 4 l-4 4z" fill="${acc}"/>`;
+  // ears & head
+  s+=`<ellipse cx="29" cy="56" rx="4" ry="6" fill="${skD}"/><ellipse cx="71" cy="56" rx="4" ry="6" fill="${skD}"/>`;
+  s+=`<path d="M30 46 C30 27 70 27 70 46 L70 57 C70 72 59 81 50 81 C41 81 30 72 30 57 Z" fill="${sk}"/>`;
+  s+=`<path d="M33 66 C36 74 43 79 50 79 C46 76 40 72 37 64Z" fill="${skD}" opacity=".35"/>`;
+  // cheeks
+  s+=`<ellipse cx="38" cy="66" rx="4" ry="2" fill="#E8868A" opacity=".22"/><ellipse cx="62" cy="66" rx="4" ry="2" fill="#E8868A" opacity=".22"/>`;
+  // eyes
+  const ey=L.ey%4,E=(cx,dir)=>{
+    if(ey===0)return `<ellipse cx="${cx}" cy="58" rx="3.6" ry="4.4" fill="${ec}"/><ellipse cx="${cx}" cy="59.5" rx="2" ry="2.4" fill="${avShade(ec,-0.45)}"/><circle cx="${cx-1.2}" cy="56.6" r="1.2" fill="#fff"/><path d="M${cx-4.4} 54.6 Q${cx} 52 ${cx+4.4} 54.6" fill="none" stroke="#2A1E1E" stroke-width="1.5" stroke-linecap="round"/>`;
+    if(ey===1)return `<path d="M${cx-4.5} ${58+dir*0.4} Q${cx} ${53.8} ${cx+4.5} ${57-dir*1.8} Q${cx} ${62} ${cx-4.5} ${58+dir*0.4}Z" fill="${ec}"/><circle cx="${cx}" cy="58.4" r="1.8" fill="${avShade(ec,-0.45)}"/><circle cx="${cx-1.1}" cy="57" r="0.9" fill="#fff"/><path d="M${cx-4.8} ${58.2+dir*0.4} Q${cx} ${53.2} ${cx+4.8} ${56.6-dir*1.8}" fill="none" stroke="#2A1E1E" stroke-width="1.6" stroke-linecap="round"/>`;
+    if(ey===2)return `<path d="M${cx-4.4} ${56.6-dir*0.9} Q${cx} ${54.4} ${cx+4.4} ${57.4+dir*0.9} Q${cx} ${62.4} ${cx-4.4} ${56.6-dir*0.9}Z" fill="${ec}"/><circle cx="${cx}" cy="59" r="1.9" fill="${avShade(ec,-0.45)}"/><circle cx="${cx-1}" cy="57.6" r="0.9" fill="#fff"/><path d="M${cx-4.8} ${56.4-dir*0.9} Q${cx} ${53.8} ${cx+4.8} ${57.6+dir*0.9}" fill="none" stroke="#2A1E1E" stroke-width="1.5" stroke-linecap="round"/>`;
+    return `<path d="M${cx-4.4} 58.4 Q${cx} 56.2 ${cx+4.4} 58.4" fill="none" stroke="#2A1E1E" stroke-width="1.8" stroke-linecap="round"/><path d="M${cx-3} 58.6 Q${cx} 60 ${cx+3} 58.6" fill="${ec}" opacity=".9"/>`;
+  };
+  s+=E(41,-1)+E(59,1);
+  // brows
+  const bA=ey===1?[[36,51.5,45,50],[55,50,64,51.5]]:ey===2?[[36,50,45,51.2],[55,51.2,64,50]]:[[36.5,50.6,45,50],[55,50,63.5,50.6]];
+  s+=bA.map(([a,b,c,d])=>`<path d="M${a} ${b} Q${(a+c)/2} ${Math.min(b,d)-1.2} ${c} ${d}" fill="none" stroke="${hcD}" stroke-width="1.5" stroke-linecap="round"/>`).join('');
+  s+=`<path d="M50 61.5 L49 65.5 L50.6 65.6" fill="none" stroke="${skD}" stroke-width="0.9" stroke-linecap="round"/>`;
+  // mouth
+  const mo=L.mo%4;
+  s+=mo===0?`<path d="M45.5 70 Q50 74 54.5 70" fill="none" stroke="#9C4A46" stroke-width="1.5" stroke-linecap="round"/>`:mo===1?`<path d="M46.5 71 L53.5 71" stroke="#9C4A46" stroke-width="1.4" stroke-linecap="round"/>`:mo===2?`<path d="M46 71.2 Q51 72 54.5 69.2" fill="none" stroke="#9C4A46" stroke-width="1.5" stroke-linecap="round"/>`:`<path d="M45.5 69.6 Q50 76 54.5 69.6 Z" fill="#9C4A46"/><path d="M47 72.2 Q50 74.2 53 72.2" fill="#E8868A"/>`;
+  // front hair
+  const H={
+   0:`<path d="M28 50 C26 30 38 22 50 22 C63 22 75 30 72 50 C70 44 66 40 62 38 C60 43 54 45 48 44 C50 41 50 39 48 37 C44 42 38 45 32 45 C31 47 30 49 28 50Z" fill="${hc}"/>`,
+   1:`<path d="M27 50 C24 40 26 32 30 28 L28 20 L36 25 L38 15 L45 22 L50 12 L55 22 L62 15 L64 25 L72 20 L70 28 C74 32 76 40 73 50 C70 44 67 41 63 40 L60 46 L55 40 L50 47 L45 40 L40 46 L37 40 C33 41 30 44 27 50Z" fill="${hc}"/>`,
+   2:`<path d="M27 66 C24 44 30 22 50 22 C70 22 76 44 73 66 C71 60 70 52 68 46 C62 46 54 44 50 40 C46 44 38 46 32 46 C30 52 29 60 27 66Z" fill="${hc}"/>`,
+   3:`<path d="M26 74 C22 46 30 22 50 22 C70 22 78 46 74 74 C72 64 70 54 68 47 C64 44 58 42 55 38 C52 42 44 46 34 46 C32 54 29 64 26 74Z" fill="${hc}"/>`,
+   4:`<path d="M28 50 C26 30 38 22 50 22 C63 22 75 30 72 50 C70 45 67 42 64 40 C58 43 52 43 46 40 C42 42 36 44 31 44 C30 46 29 48 28 50Z" fill="${hc}"/><circle cx="68" cy="38" r="3.4" fill="${acc}"/>`,
+   5:`<path d="M28 52 C25 30 38 22 50 22 C64 22 76 30 72 50 C70 40 60 36 52 38 C44 40 36 46 31 56 C30 54 29 53 28 52Z" fill="${hc}"/>`,
+   6:`<path d="M30 46 C29 30 40 25 50 25 C60 25 71 30 70 46 C68 40 62 37 50 37 C38 37 32 40 30 46Z" fill="${hc}"/>`,
+   7:`<path d="M28 50 C26 30 38 22 50 22 C63 22 75 30 72 50 C70 44 66 41 61 40 C58 43 53 44 49 42 C45 44 40 45 34 44 C32 46 30 48 28 50Z" fill="${hc}"/><circle cx="29" cy="42" r="3" fill="${acc}"/><circle cx="71" cy="42" r="3" fill="${acc}"/>`
+  };
+  s+=H[hs];
+  s+=`<path d="M38 28 C44 25 52 25 58 27" fill="none" stroke="${hcL}" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>`;
+  // accessory
+  const ac=L.ac%6;
+  if(ac===1)s+=`<rect x="35" y="53.5" width="12" height="9" rx="3" fill="#fff" fill-opacity=".12" stroke="#2C2C34" stroke-width="1.3"/><rect x="53" y="53.5" width="12" height="9" rx="3" fill="#fff" fill-opacity=".12" stroke="#2C2C34" stroke-width="1.3"/><path d="M47 57 Q50 55.5 53 57" fill="none" stroke="#2C2C34" stroke-width="1.2"/>`;
+  if(ac===2)s+=`<path d="M27 50 C26 26 74 26 73 50" fill="none" stroke="#2C2F3A" stroke-width="3.2"/><rect x="22" y="48" width="9" height="14" rx="4" fill="#2C2F3A"/><rect x="69" y="48" width="9" height="14" rx="4" fill="#2C2F3A"/><rect x="24" y="51" width="3" height="8" rx="1.5" fill="${acc}"/>`;
+  if(ac===3)s+=`<rect x="58" y="34" width="10" height="3" rx="1.5" transform="rotate(-25 63 35.5)" fill="${acc}"/>`;
+  if(ac===4)s+=`<rect x="57" y="64" width="9" height="4" rx="1.5" transform="rotate(-12 61.5 66)" fill="#F1E3C8" stroke="#D2BE9B" stroke-width=".6"/>`;
+  if(ac===5)s+=`<path d="M29 34 C36 28 64 28 71 34" fill="none" stroke="#2C2F3A" stroke-width="3"/><rect x="35" y="28" width="12" height="8" rx="3.5" fill="#2C2F3A"/><rect x="53" y="28" width="12" height="8" rx="3.5" fill="#2C2F3A"/><rect x="37" y="29.5" width="8" height="5" rx="2.5" fill="${acc}" opacity=".7"/><rect x="55" y="29.5" width="8" height="5" rx="2.5" fill="${acc}" opacity=".7"/>`;
+  s+=`</g></g><rect x=".6" y=".6" width="98.8" height="118.8" rx="9.6" fill="none" stroke="${avShade(uni,0.15)}" stroke-width="1.2"/></svg>`;
+  return s;
+}
+
+
+const UNI_COL=['#2B6C84','#8B2F33','#2E6B4E','#B27C1F','#4A3F7D','#3C4A5C','#1F5F8B','#7A3B5E','#5C6B2E','#8C5A2B','#2F7F7A','#5A2E2E'];
+const UNI_N=['青緑','赤','緑','山吹','紫','鉄色','青','赤紫','草色','茶','水色','えんじ'];
+function hstr(s){let h=2166136261;for(const ch of String(s))h=Math.imul(h^ch.codePointAt(0),16777619)>>>0;return h;}
+function hrng(seed){let a=hstr(seed)||1;return n=>{a^=a<<13;a>>>=0;a^=a>>>17;a^=a<<5;a>>>=0;return a%n;};}
+function lookOf(name){const r=hrng('look:'+name);const L={sk:r(5),hs:r(8),hc:r(9),ey:r(4),ec:r(6),mo:r(4),ac:0,uf:r(4),uc:r(12)};L.ac=r(10)<6?0:1+r(5);return L;}
+function teamUniform(tid){
+  if(tid==='me'&&typeof LEAGUE!=='undefined'&&LEAGUE&&LEAGUE.me){if(LEAGUE.me.from)return teamUniform(LEAGUE.me.from);if(typeof PC!=='undefined'&&PC&&PC.look)return {uf:PC.look.uf,uc:PC.look.uc};}
+  if(!tid||tid==='me')return null;const r=hrng('uni:'+tid);return {uf:r(4),uc:r(12)};
+}
+function lookFor(m,tid,isPC){
+  const base=isPC&&PC?(PC.look||lookOf(pcName(PC))):lookOf(m.name);const u=teamUniform(tid);
+  return u?{...base,uf:u.uf,uc:u.uc}:base;
+}
+const avatarFor=(m,tid,isPC,size)=>{const L=lookFor(m,tid,isPC);return avatarSVG(L,{uni:UNI_COL[L.uc%UNI_COL.length],size});};
+function agentCardHTML(m,o){
+  o=o||{};const L=o.look||lookFor(m,o.tid,o.isPC),se=m.se||SE_OF[m.name];
+  const tile=k=>k==='none'?`<div class="tslot2 empty"><b>—</b></div>`:`<div class="tslot2"><b>${esc(TR[k].n)}</b><small>${esc(TYPE_N[TR[k].type]||'補助')}</small></div>`;
+  const comps=[];m.main.forEach(a=>m.sub.forEach(b=>{const c=COMPS[compKey(a,b)];if(c&&!comps.includes(c.n))comps.push(c.n);}));
+  return `<div class="card prof">
+   <div class="profname"><b>${esc(m.name)}</b>${o.capt?'<span class="pos">隊長</span>':''}<span class="pos" style="margin-left:auto">${o.cls?esc(o.cls)+'　':''}${posOf(m)}</span></div>
+   <p class="small muted" style="margin:2px 0 0">${o.team?`所属：${esc(o.team)}　`:''}${o.pts!=null?`個人 ${o.pts}pt `:''}${o.badges||''}</p>
+   <div class="profav">${avatarSVG(L,{uni:UNI_COL[L.uc%UNI_COL.length]})}</div>${o.lookBtn||''}
+   <h3 class="profh">能力</h3>
+   <div class="abil">${hexSVG(m,'var(--hexc)',true)}<div class="stl"><div><span>攻撃</span><b>${atkOf(m)}</b></div><div><span>防御</span><b>${defBase(m)}</b></div><div><span>行動力</span><b>${apOf(m)}</b></div><div><span>体力</span><b>${hpOf(m)}</b></div>${o.extraStats||''}</div></div>
+   ${se?`<p class="small" style="margin:6px 0 0"><span class="sefx">サイドエフェクト：${seLabel(se)}</span><br><span class="muted">${esc(SES[se].d)}</span></p>`:''}
+   <p class="small" style="margin:6px 0 0">スキル：${(m.sk||[]).length?m.sk.map(x=>SKILLS[x].n).join('・'):'なし'}${comps.length&&m.TEC>=COMP_TEC?`<br>合成弾：${comps.join('・')}`:''}</p>
+   <h3 class="profh">トリガー構成</h3>
+   <div class="tset"><div><h5>メイン</h5>${m.main.map(tile).join('')}</div><div><h5>サブ</h5>${m.sub.map(tile).join('')}</div></div>
+   ${o.foot||''}</div>`;
+}
+function renderAgent(){
+  const a=ui.agent;if(!a){SCREEN='home';return renderHome();}
+  if(!LEAGUE)lgLoad();
+  let m=null,teamName='',capt=false,pts=null,badges='',foot='';
+  if(a.tid==='me'&&pcInLeague()){const T=LEAGUE.me.team;const raw=T.members[a.i];if(raw)mateInit(raw);m=npcTeam('me').members[a.i];teamName=T.name;capt=a.i===0;pts=raw&&raw.pts;
+    if(a.i!==T.pcIdx)foot=`<div class="row"><button class="btn ghost sm" type="button" data-a="mateedit" data-v="${a.i}">トリガーを変える</button><button class="btn ghost sm" type="button" data-a="dex">トリガー性能</button></div>`;}
+  else{const t=npcById(a.tid);m=npcTeam(a.tid).members[a.i];teamName=t?t.name:'';capt=a.i===0;pts=npcPts(npcById(a.tid).members[a.i]);badges=rankBadge(m,pts);}
+  if(!m){SCREEN='league';return renderLeague();}
+  app.innerHTML=`<div class="top"><h2>隊員ページ</h2><button class="btn ghost sm" type="button" data-a="agentback">戻る</button></div>${agentCardHTML(m,{tid:a.tid,team:teamName,capt,pts,badges,foot,cls:a.tid&&A_IDS().includes(a.tid)?'A級':'B級'})}`;
+}
+function renderLookEdit(){
+  pcLoad();if(!PC){SCREEN='rp';return renderRP();}
+  const L=ui.lookDraft=ui.lookDraft||Object.assign({},PC.look||lookOf(pcName(PC)));
+  const teamU=pcInLeague()&&LEAGUE.me.from;
+  const SW={sk:AV.skin,hc:AV.hair,ec:AV.eye,uc:UNI_COL};
+  const row=(k,label,list)=>`<div class="lkrow"><span>${label}</span><button class="opt" type="button" data-a="lkc" data-v="${k}:-1" aria-label="前へ">◀</button><b>${SW[k]?`<i class="sw" style="background:${SW[k][L[k]%SW[k].length]}"></i>`:''}${esc(list[L[k]%list.length])}</b><button class="opt" type="button" data-a="lkc" data-v="${k}:1" aria-label="次へ">▶</button></div>`;
+  const nums=n=>Array.from({length:n},(_,i)=>String(i+1));
+  app.innerHTML=`<div class="top"><h2>見た目を変える</h2><button class="btn ghost sm" type="button" data-a="lkcancel">やめる</button></div>
+  <div class="card"><div class="profav">${avatarSVG(teamU?{...L,...teamUniform(LEAGUE.me.from)}:L,{uni:UNI_COL[(teamU?teamUniform(LEAGUE.me.from).uc:L.uc)%UNI_COL.length]})}</div>
+   ${row('sk','肌の色',nums(AV.skin.length))}${row('hs','髪型',AV.hs)}${row('hc','髪の色',nums(AV.hair.length))}${row('ey','目',AV.ey)}${row('ec','目の色',nums(AV.eye.length))}${row('mo','口もと',AV.mo)}${row('ac','小物',AV.ac)}
+   ${teamU?`<p class="small muted" style="margin:8px 0">隊服は所属部隊（${esc(LEAGUE.me.team.name)}）のものです。</p>`:`${row('uf','隊服',AV.uf)}${row('uc','隊服の色',UNI_N)}<p class="small muted" style="margin:6px 0">${pcInLeague()?'隊服は部隊のみんなとおそろいになります。':'部隊を作ると、この隊服が部隊の隊服になります。'}</p>`}
+   <div class="row" style="margin-top:10px"><button class="btn ghost sm" type="button" data-a="lkrand">おまかせ</button><button class="btn" type="button" data-a="lksave">この見た目にする</button></div></div>`;
+}
+
 /* ================= interaction ================= */
 function onCell(x,y){
+  if(MODE==='replay')return;
   if(!G||G.status!=='play')return;
   const u=unitAt(G,x,y),k=keyOf(x,y),sel=ui.sel?uById(G,ui.sel):null;
   if(ui.opMode){const own=G.units.filter(x=>!x.out&&canCtrl(x)),ot=own.length?own[0].team:-1;
@@ -3997,6 +4317,22 @@ app.addEventListener('click',e=>{
   else if(a==='join')joinRoom(document.getElementById('codein').value);
   else if(a==='teams'){SCREEN='teams';render();}
   else if(a==='league'){lgLoad();SCREEN='league';render();}
+  else if(a==='agent'){const [tid,i]=v.split(':');ui.agent={tid,i:+i,back:SCREEN,npc:ui.npc};SCREEN='agent';window.scrollTo(0,0);render();}
+  else if(a==='agentback'){const b=ui.agent&&ui.agent.back;if(b==='npc')ui.npc=ui.agent.npc;SCREEN=b&&b!=='agent'?b:'rp';render();}
+  else if(a==='lookedit'){ui.lookDraft=null;SCREEN='lookedit';window.scrollTo(0,0);render();}
+  else if(a==='lkc'){const [k,d]=v.split(':');const n={sk:AV.skin.length,hs:AV.hs.length,hc:AV.hair.length,ey:AV.ey.length,ec:AV.eye.length,mo:AV.mo.length,ac:AV.ac.length,uf:AV.uf.length,uc:UNI_COL.length}[k];ui.lookDraft[k]=((ui.lookDraft[k]||0)+(+d)+n)%n;render();}
+  else if(a==='lkrand'){const r=hrng('r'+Date.now()+Math.random());ui.lookDraft={sk:r(5),hs:r(8),hc:r(9),ey:r(4),ec:r(6),mo:r(4),ac:r(10)<6?0:1+r(5),uf:r(4),uc:r(12)};render();}
+  else if(a==='lksave'){pcLoad();PC.look=Object.assign({},ui.lookDraft);pcSave();ui.lookDraft=null;sfx('chime');toast('見た目を変えました');SCREEN='rp';render();}
+  else if(a==='lkcancel'){ui.lookDraft=null;SCREEN='rp';render();}
+  else if(a==='replays'){ui.rpBack=SCREEN;SCREEN='replays';render();}
+  else if(a==='rpback'){SCREEN=ui.rpBack&&ui.rpBack!=='replays'?ui.rpBack:'rp';render();}
+  else if(a==='rpopen'){if(MODE==='replay')repStop();goHome&&0;repStart(v);}
+  else if(a==='rpdel'){if(confirm('このリプレイを削除しますか？')){repStore(repLoad().filter(r=>r.id!==v));render();}}
+  else if(a==='rpplay'){if(RP){RP.play=!RP.play;if(RP.play){if(RP.i>=RP.rec.fr.length-1)repGo(0,false);repTick();}else clearTimeout(RP.timer);render();}}
+  else if(a==='rpstep'){if(RP){RP.play=false;clearTimeout(RP.timer);repGo(RP.i+(+v),+v>0);}}
+  else if(a==='rpround'){if(RP){RP.play=false;clearTimeout(RP.timer);const r=RP.rec.fr[RP.i].r+(+v);const k=repRoundIdx(r);if(k>=0)repGo(k,false);}}
+  else if(a==='rpspeed'){if(RP){RP.speed=RP.speed>=4?1:RP.speed*2;render();}}
+  else if(a==='rpexit'){repStop();SCREEN='replays';render();}
   else if(a==='defgo'){startDefense(+v);}
   else if(a==='dex'){ui.dexBack=SCREEN;SCREEN='dex';window.scrollTo(0,0);render();}
   else if(a==='dexback'){SCREEN=ui.dexBack&&ui.dexBack!=='dex'?ui.dexBack:'home';render();}
@@ -4065,6 +4401,7 @@ app.addEventListener('click',e=>{
     LS.slots.forEach(s=>{if(s.pick!=='rnd'&&!TEAMS.some(t=>t.id===s.pick))s.pick='rnd';});
     SCREEN='local';render();
   }
+  else if(a==='home'&&MODE==='replay'){repStop();SCREEN='replays';render();}
   else if(a==='home'){
     if((SCREEN==='lgame'||SCREEN==='room')&&G&&G.status==='play'&&!confirm(MODE==='online'?'部屋を退出しますか？（あとで同じコードで戻れます）':'試合を終了しますか？'))return;
     goHome();
@@ -4091,6 +4428,7 @@ app.addEventListener('click',e=>{
   else if(a==='auto'){if(sel&&canCtrl(sel)){const f=v==='m'?'am':'as';sel[f]=!sel[f];if(MODE==='online'&&MYCTRL){MYCTRL[sel.id]=ctrlOf(sel);writeCtrl();}if(sel[f]){aimAll(G);}render();}}
   else if(a==='pause'){ui.paused=!ui.paused;if(!ui.paused)SEENSET=contactSet();render();}
   else if(a==='apause'){AUTOPAUSE=!AUTOPAUSE;render();}
+  else if(a==='skipend'){skipToEnd();}
   else if(a==='rtmode'){ui.route=!ui.route;ui.aim=null;if(ui.route){const s=ui.sel&&uById(G,ui.sel);ui.segs=[];if(s&&PLAN&&PLAN.orders[s.id]&&PLAN.orders[s.id].path.length)ui.segs=[0];toast('黄色いマスを順にタップして、ルートを延ばしていきます');}render();}
   else if(a==='rtundo'){const s=ui.sel&&uById(G,ui.sel);if(s&&PLAN&&(ui.segs||[]).length){const n=ui.segs.pop();PLAN.orders[s.id].path=PLAN.orders[s.id].path.slice(0,n);render();}}
   else if(a==='rtclear'){const s=ui.sel&&uById(G,ui.sel);if(s&&PLAN){PLAN.orders[s.id].path=[];ui.segs=[];render();}}
@@ -4171,6 +4509,8 @@ app.addEventListener('change',e=>{
   if(a==='lsCond'){LS.cond=el.value;render();return;}
   if(a==='lsPlan'){OPTS.planSec=+el.value;optsSave();render();return;}
   if(a==='hostCond'&&G&&G.host===ME){G.cond=el.value;G.seq=(G.seq||0)+1;pushGame();renderLobby();return;}
+  if(a==='rpjump'&&RP){RP.play=false;clearTimeout(RP.timer);const k=repRoundIdx(+el.value);if(k>=0)repGo(k,false);return;}
+  if(a==='rpseek'&&RP){RP.play=false;clearTimeout(RP.timer);repGo(+el.value,false);return;}
   if(a==='lsN'){LS.n=+el.value;render();}
   else if(a==='lgmap'&&LEAGUE){const [lk,i]=el.dataset.v.split(':'),m=matchRef(lk,+i);if(m)m.map=+el.value;if(LEAGUE.me)LEAGUE.me.map=+el.value;lgSave();render();}
   else if(a==='lsMap'){LS.mapId=+el.value;render();}
