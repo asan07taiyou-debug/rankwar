@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ランク戦タクティクス v5.9</title>
+<title>ランク戦タクティクス v6.3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -583,8 +583,6 @@ body{background:var(--bg);color:var(--ink)}
 .spec{padding:6px 8px;border:1.5px dashed var(--line);width:100%}
 .prof .profname{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .prof .profname>b{font-size:21px}
-.profav{display:flex;justify-content:center;margin:10px 0 6px}
-.profav svg{width:min(200px,58vw);height:auto;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
 .profh{margin:14px 0 6px;font-size:14px;letter-spacing:.12em;color:var(--frame,var(--t0));font-family:"Roboto Condensed","Noto Sans JP",sans-serif;border-bottom:1.5px solid var(--line);padding-bottom:4px}
 .tset{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tset h5{margin:0 0 4px;font-size:12px;letter-spacing:.1em;color:var(--muted)}
@@ -594,12 +592,7 @@ body{background:var(--bg);color:var(--ink)}
 .memrow{display:flex!important;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer;color:var(--ink);font:inherit}
 .memrow .mtx{flex:1;min-width:0;line-height:1.5}
 .memrow .mgo{font-size:26px;color:var(--muted)}
-.mav svg{display:block;border-radius:6px}
-.mavbtn{padding:0;border:0;background:none;cursor:pointer;margin-right:8px;flex:none}
-.lkrow{display:grid;grid-template-columns:6.5em auto 1fr auto;align-items:center;gap:6px;margin:5px 0}
-.lkrow b{text-align:center;font-weight:600}
-.lkrow .opt{padding:6px 12px}
-.lkrow .sw{display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:-3px;margin-right:6px;border:1.5px solid rgba(255,255,255,.6)}
+.cmdpanel{border:1.5px dashed var(--frame,var(--t0));padding:6px 8px;margin:0 0 6px;width:100%}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#071A22">
@@ -895,6 +888,8 @@ function shotTri(f){let c=f.comp?(TRI_SHOT[f.k]||0)+(TRI_SHOT[f.k2]||0):(TRI_SHO
 function useTri(S,u,n,why){if(!n||u.out)return true;if(u.se==='tainai')n*=0.9;u.tri=Math.max(0,(u.tri==null?triMaxOf(u):u.tri)-n);if(u.tri<=0.001){u.tri=0;u.out=true;S.log.push({r:S.turn.round,t:`${nm(S,u)} トリオン切れで緊急脱出`});S.triOut=(S.triOut||[]).concat([u.id]);}return !u.out;}
 const ORDERS={rush:{n:'突撃',tac:'rush',d:'全員で距離を詰めて攻める'},hold:{n:'待機・防御',tac:'turtle',d:'その場で固まって守る'},gather:{n:'集合',tac:'escort',d:'隊長の近くに集まる'},hide:{n:'潜伏',tac:'stealth',d:'バッグワームで隠れて動く'},focus:{n:'集中攻撃',tac:null,d:'指定した敵を全員で狙う'}};
 const leaderOf=(S,team)=>S.units.find(x=>x.team===team&&x.id.endsWith('0')&&!x.out)||null;
+const cmdrOf=(S,team)=>S.units.find(x=>x.team===team&&x.id.endsWith('0'))||null;
+const pcIsCmdr=(S,team)=>{const t=S.teams[team],C=t&&t.pc&&cmdrOf(S,team);return !!(C&&C.id===t.pc);};
 function opUpdate(S){
   S.tc=(S.tc||0);
   const dc=S.teams.map((_,i)=>detection(S,i));
@@ -936,17 +931,17 @@ function cpuOperator(S,team){
   const b=blips.sort((p,q)=>Math.hypot(p.x-cx,p.y-cy)-Math.hypot(q.x-cx,q.y-cy))[0];
   opScan(S,team,b.x,b.y);
 }
-function cmdHit(S,u){const L=leaderOf(S,u.team);let b=0;if(L&&L.id!==u.id)b+=Math.max(0,(L.CMD||4)-4)*2;const t=S.teams[u.team];if(t&&t.morale&&t.morale>=S.turn.round)b+=5+Math.floor(opOf(S,u.team).LNK/3);return b;}
+function cmdHit(S,u){const L=cmdrOf(S,u.team);let b=0;if(L&&L.id!==u.id)b+=Math.max(0,(L.CMD||4)-4)*2;const t=S.teams[u.team];if(t&&t.morale&&t.morale>=S.turn.round)b+=5+Math.floor(opOf(S,u.team).LNK/3);return b;}
 function orderActive(S,team){const o=S.teams[team]&&S.teams[team].order;return o&&S.turn.round<=o.round+1?o:null;}
 function unitTac(S,u){const uo=uoOf(S,u);if(uo&&uo.type==='tac')return uo.tac;const t=S.teams[u.team],o=orderActive(S,u.team);if(o&&o.obey&&o.obey[u.id]&&ORDERS[o.type].tac)return ORDERS[o.type].tac;return (t&&t.tac)||'balanced';}
 function uoOf(S,u){const t=S.teams[u.team],o=t&&t.uo&&t.uo[u.id];if(!o||!o.ok)return null;if((o.type==='target'||o.type==='follow')){const x=uById(S,o.id);if(!x||x.out)return null;}return o;}
 function issueUnitOrder(S,team,uid,ord,force){
-  const t=S.teams[team];t.uo=t.uo||{};const L=leaderOf(S,team),cmd=L?(L.CMD||4):3;
+  const t=S.teams[team];t.uo=t.uo||{};const L=cmdrOf(S,team),cmd=L?(L.CMD||4):3;
   const ok=force||Math.random()<clamp(40+cmd*7+opOf(S,team).LNK*3+(L&&L.se==='koe'?20:0),40,100)/100;
   t.uo[uid]={...ord,ok,round:S.turn.round};return ok;
 }
 function issueOrder(S,team,type,targetId){
-  const L=leaderOf(S,team),cmd=L?(L.CMD||4):3,p=clamp(40+cmd*7+opOf(S,team).LNK*3+(L&&L.se==='koe'?20:0),40,100)/100,t=S.teams[team];
+  const L=cmdrOf(S,team),cmd=L?(L.CMD||4):3,p=clamp(40+cmd*7+opOf(S,team).LNK*3+(L&&L.se==='koe'?20:0),40,100)/100,t=S.teams[team];
   const obey={};let n=0,tot=0;
   for(const u of S.units)if(!u.out&&u.team===team&&u.id!==t.pc){tot++;if(Math.random()<p){obey[u.id]=true;n++;}}
   t.order={type,round:S.turn.round,obey,target:targetId||null,by:L?L.id:null};
@@ -1498,7 +1493,8 @@ function aimAll(S){
   for(const u of S.units){if(u.out)continue;const pc=S.teams[u.team].pc;if(S.teams[u.team].cpu||(pc&&u.id!==pc)||(u.au&&!isManual(S,u)))cpuAim(S,u,dets[u.team]);}
 }
 function npcCaptainOrder(S,team){
-  const L=leaderOf(S,team);if(!L)return null;
+  const L=cmdrOf(S,team);if(!L)return null;
+  if(!S.units.some(u=>!u.out&&u.team===team))return null;
   const det=detection(S,team),mine=S.units.filter(u=>!u.out&&u.team===team);
   const seen=S.units.filter(e=>!e.out&&e.team!==team&&det[e.id]&&det[e.id]!=='blip');
   const hpAvg=mine.reduce((s,u)=>s+u.hp/u.hpMax,0)/Math.max(1,mine.length);
@@ -1509,7 +1505,7 @@ function npcCaptainOrder(S,team){
   issueOrder(S,team,type);return type;
 }
 function npcCaptainPersonal(S,team){
-  const t=S.teams[team],L=leaderOf(S,team),pu=uById(S,t.pc);if(!L||!pu||pu.out)return null;
+  const t=S.teams[team],L=cmdrOf(S,team),pu=uById(S,t.pc);if(!L||!pu||pu.out)return null;
   const o=orderActive(S,team),det=detection(S,team);let ord=null;
   if(o&&o.type==='focus'&&o.target)ord={type:'target',id:o.target};
   else if(o&&o.type==='rush'){const e=nearestTarget(S,pu,det);if(e&&e.id&&uById(S,e.id))ord={type:'target',id:e.id};}
@@ -1655,7 +1651,7 @@ function pushGame(){
   if(!isHost()||!G)return Promise.resolve();
   G.hostNow=Date.now();
   if(G.status==='play'&&G.phase==='plan'&&G.planRound!==G.turn.round){G.planRound=G.turn.round;if(G.planSec)G.planEnd=Date.now()+G.planSec*1000;
-    G.teams.forEach((t,i)=>{if(!t.cpu&&t.pc&&aliveTeams(G)[i]){const L=leaderOf(G,i);if(L&&L.id!==t.pc){cpuOperator(G,i);npcCaptainOrder(G,i);npcCaptainPersonal(G,i);}}});}
+    G.teams.forEach((t,i)=>{if(!t.cpu&&t.pc&&aliveTeams(G)[i]){const L=cmdrOf(G,i);if(L&&L.id!==t.pc){cpuOperator(G,i);npcCaptainOrder(G,i);npcCaptainPersonal(G,i);}}});}
   if(G.status==='lobby')G.seats=SEATS.map(s=>({uid:s.uid,team:s.team?{name:s.team.name,members:s.team.members.map(m=>({name:m.name,main:m.main,sub:m.sub,T:m.T,MOB:m.MOB}))}:null,ready:s.ready,t:s.t}));
   else delete G.seats;
   G.ordStat={};for(const k in ORD)G.ordStat[k]=ORD[k].round;
@@ -1891,13 +1887,13 @@ function startRoundLocal(){
   if(G&&G.rec&&G.turn.round>1)recFrame(G);
   if(G&&G.def&&G.def.lastWave&&G.def.lastWave.r===G.turn.round&&!G.def.lastWave.shown){G.def.lastWave.shown=1;setTimeout(()=>{sfx('alert');toast(`第${G.def.lastWave.i}波：トリオン兵が${G.def.lastWave.n}体出現！`);},400);}
   const alive=aliveTeams(G);
-  LOCAL={humans:humanTeams(G).filter(i=>alive[i]),idx:0,orders:{}};
+  LOCAL={humans:humanTeams(G).filter(i=>{if(!alive[i])return false;const t=G.teams[i],pu=t.pc&&uById(G,t.pc);if(pu&&pu.out&&!pcIsCmdr(G,i))return false;return true;}),idx:0,orders:{}};
   if(!LOCAL.humans.length){PLAN=null;const s=session;setTimeout(()=>{if(s===session)resolveLocal();},400);render();return;}
   beginPlan();
 }
 function beginPlan(){
   const t=LOCAL.humans[LOCAL.idx];
-  {const tm=G.teams[t];if(tm.pc&&leaderOf(G,t)&&leaderOf(G,t).id!==tm.pc){const ty=npcCaptainOrder(G,t);npcCaptainPersonal(G,t);if(ty){const o=tm.order;sfx('radio');toast(`隊長の指示：${ORDERS[ty].n}${ty==='focus'&&o.target?`（${uById(G,o.target).name}）`:''}`);}}}
+  {const tm=G.teams[t];if(tm.pc&&cmdrOf(G,t)&&cmdrOf(G,t).id!==tm.pc){const ty=npcCaptainOrder(G,t);npcCaptainPersonal(G,t);if(ty){const o=tm.order;sfx('radio');toast(`隊長の指示：${ORDERS[ty].n}${ty==='focus'&&o.target?`（${uById(G,o.target).name}）`:''}`);}}}
   PLAN={team:t,round:G.turn.round,orders:defaultOrders(G,t)};
   ui.planEnd=OPTS.planSec&&!G.tut?Date.now()+OPTS.planSec*1000:null;ui.lastBeep=null;
   ui.sel=null;ui.insp=null;ui.aim=null;
@@ -1931,7 +1927,7 @@ function scheduleLocal(){
 function judgeOrder(){
   const ti=G.teams.findIndex(t=>t.pc);if(ti<0)return;
   const t=G.teams[ti],o=orderActive(G,ti),pu=uById(G,t.pc);if(!o||!pu||pu.out||o.judged===G.turn.round)return;
-  const L=leaderOf(G,ti);if(L&&L.id===t.pc)return;
+  const L=cmdrOf(G,ti);if(L&&L.id===t.pc)return;
   o.judged=G.turn.round;
   let ok=false;
   const po=t.uo&&t.uo[t.pc];
@@ -1961,6 +1957,7 @@ function localStep(){
 
 /* ---------- view helpers ---------- */
 const myTeam=()=>G&&G.teams?G.teams.findIndex(t=>t.uid===ME):-1;
+function cmdTeam(){if(!G||!G.teams)return -1;if(MODE==='online'){const mt=myTeam();return mt>=0&&pcIsCmdr(G,mt)?mt:-1;}if(MODE!=='local')return -1;const i=G.teams.findIndex((t,i)=>!t.cpu&&t.pc&&pcIsCmdr(G,i));return i;}
 function myWiped(){if(MODE!=='local'||!G||!G.units)return false;const h=humanTeams(G);return h.length>0&&h.every(t=>!G.units.some(u=>u.team===t&&!u.out));}
 function viewTeam(){
   if(MODE==='replay'||G.status==='over')return -1;
@@ -1994,7 +1991,6 @@ function render0(){
   if(SCREEN==='league')return renderLeague();
   if(SCREEN==='rp')return renderRP();
   if(SCREEN==='agent')return renderAgent();
-  if(SCREEN==='lookedit')return renderLookEdit();
   if(SCREEN==='replays')return renderReplays();
   if(SCREEN==='dex')return renderDex();
   if(SCREEN==='save')return renderSave();
@@ -2042,8 +2038,9 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
  'ネット対戦では作戦タイムに制限時間（2分か3分、時間切れでその時点の作戦で決定）。交戦は1手番3秒で、一時停止は1試合ごとの持ち時間（30〜90秒）を使い切るまで。CPU戦は作戦の時間制限をなし・2分・3分から選べる。',
  '建物の破壊：メテオラ・擲弾銃・サラマンダー・トマホークなどの炸裂弾は、着弾点と周り8マスの建物を削る（1段あたり耐久8）。削りきると1段低くなり、崩れきると瓦礫（移動コスト+1）。足場や射線が変わる。マップは市街地・河川敷・工業地区・高層ビル街・住宅地・港湾地区・郊外の公園の7つ。',
  '防衛任務：B級以上。波ごとに現れるトリオン兵（フィッチ・シザー・ドーム・モルタ・スパイン）を全滅させれば成功。通常・強化・大規模侵攻の3段階で、倒した数で個人ポイント、初回成功でスキルポイント。',
- '隊員ページ：自分の隊員は隊員ページの上部、ほかの隊員は部隊の詳細や自分の部隊の仲間をタップすると、隊員名・見た目・能力・トリガー構成の順で見られる。自分の見た目（輪郭線のあるSD風の絵）は「見た目を変える」で肌・髪型・髪の色・目・口もと・小物・隊服を選べる（隊服は部隊でおそろい）。ほかの隊員の見た目は名前から自動で決まる。',
+ '隊員ページ：自分の隊員は隊員ページの上部、ほかの隊員は部隊の詳細の行や自分の部隊の仲間の「隊員ページ」から、隊員名・能力・トリガー構成の順で見られる。',
  '仲間の成長：同じ部隊の仲間（自分以外）は、試合ごとに個人ポイントを得る（ランク戦：出場+40・撃破1人+60・生存+40・部隊が最多得点+40、防衛任務はその半分ほど）。ポイントに応じてスキルを覚え、技術・回避が伸びる。隊員ページで確認できる。NPC部隊の隊員は成長しない。',
+ '隊長が緊急脱出しても通信はつながっているので、仲間が残っていれば部隊への指示・仲間への個別指示・集中攻撃を出し続けられる（作戦タイムも続く）。隊長の指揮による命中の上乗せも残る。隊員として脱出した場合は、作戦タイムを飛ばして自動で進む。',
  '自分の部隊が全滅したあとも試合が続くときは、全員が見える観戦モードになり、「結果まで飛ばす」で最後まで一気に進められる（この端末の試合のみ。ネット対戦は自分の部隊の視点のまま）。',
  'リプレイ：自分が出たランク戦（昇格戦・CPUに任せた試合を含む）と防衛任務を直近8試合まで自動保存。隊員ページかランク戦の画面の「リプレイ」から、全体を見渡す視点で再生・一時停止・手番送り・ラウンド移動・倍速で見られる。',
  'セーブデータはホームの「セーブデータ」からコードで書き出し・読み込みできる。'])}
@@ -2051,7 +2048,7 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
 }
 function renderHome(){
   const on=CAP==='ok';
-  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v5.9）</p>
+  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v6.3）</p>
   <div class="row" style="margin:-10px 0 16px">${soundUI()}<button class="opt" type="button" data-a="savescr">セーブデータ</button><button class="opt" type="button" data-a="dex">トリガー性能</button></div>
   <div class="card tutc"><h2>はじめての方へ</h2><p class="muted small" style="margin-top:0">基本編：隊員の選び方・移動・扇の向け方・交戦（約3分）。応用編：トリオン、エスクードの壁、グラスホッパーの跳躍、オペレーターのスキャン、仲間への指示（約5分）。</p><div class="row"><button class="btn" type="button" data-a="tutorial">基本編</button><button class="btn ghost" type="button" data-a="tutorial2">応用編</button></div></div>
   <div class="card mine"><h2>ボーダー隊員になる</h2><p class="muted small" style="margin-top:0">自分がなりきる隊員を1人作り、C級（訓練生）かB級から始めて、部隊でランク戦を戦います。自分の1人だけを操作し、仲間はCPUが動きます。</p><button class="btn" type="button" data-a="rp">隊員ページへ</button></div>
@@ -2736,8 +2733,9 @@ function joyLabel(){
 function bmDock(){
   if(MODE==='replay'){replayDock();return;}
   const own=G.units.filter(u=>!u.out&&canCtrl(u)),sel=ui.sel&&uById(G,ui.sel);
-  const mates=G.units.filter(u=>!u.out&&G.teams[u.team].pc&&own.some(o=>o.team===u.team)&&!canCtrl(u));
-  document.getElementById('bmUnits').innerHTML=(own.length?own.map(u=>{const pct=u.hp/u.hpMax;return `<button class="bmu${ui.sel===u.id?' on':''}" type="button" data-a="sel" data-v="${u.id}" style="--c:${tc(u.team)}"><b>${esc(u.name)}</b><i><u style="width:${pct*100}%;background:${pct>0.6?'#3DBE7A':pct>0.3?'#E3B23C':'#E5533F'}"></u></i><i class="tri"><u style="width:${u.triMax?Math.round((u.tri||0)/u.triMax*100):0}%"></u></i><small>${esc(TR[mainK(u)].n)}／${esc(TR[subK(u)].n)}　T${Math.floor(u.tri||0)}${u.leak>0?`<span class="lk"> 漏出−${u.leak.toFixed(1)}</span>`:''}</small></button>`;}).join(''):(myWiped()&&G.status==='play'?`<div class="spec"><p class="chint" style="margin:0 0 6px"><b>部隊が全滅しました</b>　観戦モード（全員が見えます）</p><button class="btn sm" type="button" data-a="skipend">結果まで飛ばす</button></div>`:`<p class="chint" style="padding:6px">${MODE==='online'&&myTeam()<0?'観戦中':'操作できる隊員はいません'}</p>`))+mates.map(u=>{const pct=u.hp/u.hpMax,cap=G.teams[u.team].pc&&leaderOf(G,u.team)&&leaderOf(G,u.team).id===G.teams[u.team].pc,uo=uoOf(G,u);const lab=uo?({pos:'地点へ',follow:'集合',target:'敵を狙う',hold:'待機',tac:'作戦'}[uo.type]||''):'仲間（CPU）';
+  const pcTeams=G.teams.map((t,i)=>(!t.cpu&&t.pc&&(MODE!=='online'||i===myTeam()))?i:-1).filter(i=>i>=0);
+  const mates=G.units.filter(u=>!u.out&&G.teams[u.team].pc&&(own.some(o=>o.team===u.team)||pcTeams.includes(u.team))&&!canCtrl(u));
+  document.getElementById('bmUnits').innerHTML=(own.length?own.map(u=>{const pct=u.hp/u.hpMax;return `<button class="bmu${ui.sel===u.id?' on':''}" type="button" data-a="sel" data-v="${u.id}" style="--c:${tc(u.team)}"><b>${esc(u.name)}</b><i><u style="width:${pct*100}%;background:${pct>0.6?'#3DBE7A':pct>0.3?'#E3B23C':'#E5533F'}"></u></i><i class="tri"><u style="width:${u.triMax?Math.round((u.tri||0)/u.triMax*100):0}%"></u></i><small>${esc(TR[mainK(u)].n)}／${esc(TR[subK(u)].n)}　T${Math.floor(u.tri||0)}${u.leak>0?`<span class="lk"> 漏出−${u.leak.toFixed(1)}</span>`:''}</small></button>`;}).join(''):(myWiped()&&G.status==='play'?`<div class="spec"><p class="chint" style="margin:0 0 6px"><b>部隊が全滅しました</b>　観戦モード（全員が見えます）</p><button class="btn sm" type="button" data-a="skipend">結果まで飛ばす</button></div>`:`<p class="chint" style="padding:6px">${MODE==='online'&&myTeam()<0?'観戦中':'操作できる隊員はいません'}</p>`))+mates.map(u=>{const pct=u.hp/u.hpMax,cap=pcIsCmdr(G,u.team)&&(MODE!=='online'||u.team===myTeam()),uo=uoOf(G,u);const lab=uo?({pos:'地点へ',follow:'集合',target:'敵を狙う',hold:'待機',tac:'作戦'}[uo.type]||''):'仲間（CPU）';
     return `<${cap?'button type="button" data-a="cmdpick" data-v="'+u.id+'"':'div'} class="bmu mate${ui.cmdUnit===u.id?' on':''}" style="--c:${tc(u.team)}"><b>${esc(u.name)}</b><i><u style="width:${pct*100}%;background:${pct>0.6?'#3DBE7A':pct>0.3?'#E3B23C':'#E5533F'}"></u></i><small>${esc(lab)}</small></${cap?'button':'div'}>`;}).join('');
   let c='';
   if(sel&&canCtrl(sel)){
@@ -2747,7 +2745,7 @@ function bmDock(){
     c+=faButton(G,sel,'opt bmmini');
     const lf=ui.dslot==='s'?'ls':'lm',side=ui.dslot==='s'?sel.sub:sel.main,kk=ui.dslot==='s'?subK(sel):mainK(sel);
     if((TR[kk].type==='shot'||TR[kk].type==='snipe')&&side.includes('lead'))c+=`<button class="opt bmmini" type="button" data-a="lead" data-v="${ui.dslot==='s'?'s':'m'}" aria-pressed="${!!sel[lf]}">鉛弾：${sel[lf]?'オン':'オフ'}</button>`;
-  }else if(!myWiped())c+=`<p class="chint" style="margin:4px 0 8px">隊員カードをタップ → 右のスティックで扇を動かす</p>`;
+  }else if(!myWiped()&&own.length)c+=`<p class="chint" style="margin:4px 0 8px">隊員カードをタップ → 右のスティックで扇を動かす</p>`;
   if(ui.cmdUnit){const mu=uById(G,ui.cmdUnit);if(mu&&!mu.out){const others=G.units.filter(x=>!x.out&&x.team===mu.team&&x.id!==mu.id);
     c=`<div class="cmdbox"><p class="chint" style="margin:0 0 4px"><b>${esc(mu.name)}</b>への指示${ui.cmdMode==='pos'?'：盤面をタップして地点を選択':ui.cmdMode==='target'?'：狙う敵をタップ':''}</p><div class="crow">
       <button class="opt" type="button" data-a="cmdmode" data-v="pos" aria-pressed="${ui.cmdMode==='pos'}">この地点へ</button>
@@ -2757,11 +2755,13 @@ function bmDock(){
       <button class="opt" type="button" data-a="cmdclose">閉じる</button></div></div>`+c;}else ui.cmdUnit=null;}
   if(sel&&G.phase==='plan'&&canPath(sel)){const pth=PLAN.orders[sel.id].path,cost=pathCost(sel,pth);
     c+=`<div class="crow rtr"><span class="clab">ルート</span><button class="opt" type="button" data-a="rtmode" aria-pressed="${!!ui.route}">${ui.route?'描画中：経由地をタップ':'ルートを描く'}</button>${ui.route||pth.length?`<button class="opt" type="button" data-a="rtundo" ${(ui.segs||[]).length?'':'disabled'}>1区間戻す</button><button class="opt" type="button" data-a="rtclear" ${pth.length?'':'disabled'}>消す</button>`:''}<span class="small muted">${pth.length?`${pth.length}マス・行動力${cost}/${apOf(sel)}`:''}</span></div>`;}
-  {const pt=sel&&G.teams[sel.team];if(pt&&pt.pc===sel.id){const L=leaderOf(G,sel.team),o=orderActive(G,sel.team);
+  {const pt=sel&&G.teams[sel.team];if(pt&&pt.pc===sel.id){const L=cmdrOf(G,sel.team),o=orderActive(G,sel.team);
     if(L&&L.id===sel.id)c+=`<div class="crow ordr"><span class="clab">指示</span>${['rush','hold','gather','hide'].map(k=>`<button class="opt" type="button" data-a="order" data-v="${k}" aria-pressed="${!!(o&&o.type===k)}">${ORDERS[k].n}</button>`).join('')}</div>`;
     {const po=pt.uo&&pt.uo[sel.id];if(po&&po.cap){const x=po.id&&uById(G,po.id);c+=`<p class="chint ordr"><b>あなたへの指示：${po.type==='target'&&x?esc(x.name)+'を狙え':po.type==='follow'&&x?esc(x.name)+'の元へ':po.type==='hold'?'その場で待機':''}</b></p>`;}}
     if(o)c+=`<p class="chint ordr"><b>隊長の指示：${ORDERS[o.type].n}</b>${o.type==='focus'&&o.target&&uById(G,o.target)?`（${esc(uById(G,o.target).name)}）`:''}　${esc(ORDERS[o.type].d)}</p>`;}}
-  {const ot=own.length?own[0].team:-1;if(ot>=0&&G.status==='play'&&!G.teams[ot].noOp){const op=opOf(G,ot),sr=scanReady(G,ot),rr=routeReady(G,ot);
+  {const ct=cmdTeam();if(ct>=0&&G.status==='play'){const pu=uById(G,G.teams[ct].pc);if(pu&&pu.out&&G.units.some(u=>!u.out&&u.team===ct)){const o=orderActive(G,ct);
+    c=`<div class="cmdpanel"><p class="chint" style="margin:0 0 4px"><b>緊急脱出中・通信で指示</b>　部隊への指示はここから、仲間のカードをタップすると個別に指示できます</p><div class="crow ordr"><span class="clab">指示</span>${['rush','hold','gather','hide'].map(k=>`<button class="opt" type="button" data-a="order" data-v="${k}" aria-pressed="${!!(o&&o.type===k)}">${ORDERS[k].n}</button>`).join('')}</div>${o?`<p class="chint ordr"><b>今の指示：${ORDERS[o.type].n}</b>${o.type==='focus'&&o.target&&uById(G,o.target)?`（${esc(uById(G,o.target).name)}）`:''}</p>`:''}<p class="chint" style="margin:2px 0 0">集中攻撃は、敵をタップして「集中攻撃」から。</p></div>`+c;}}}
+  {const ot=own.length?own[0].team:(cmdTeam()>=0&&uById(G,G.teams[cmdTeam()].pc)&&uById(G,G.teams[cmdTeam()].pc).out?cmdTeam():-1);if(ot>=0&&G.status==='play'&&!G.teams[ot].noOp){const op=opOf(G,ot),sr=scanReady(G,ot),rr=routeReady(G,ot);
     c+=`<div class="crow opr"><span class="clab">OP</span><span class="small"><b>${esc(op.name)}</b></span><button class="opt" type="button" data-a="opscan" aria-pressed="${ui.opMode==='scan'}" ${sr?'':'disabled'}>${ui.opMode==='scan'?'地点をタップ':'索敵スキャン'}${sr?'':`（R${(G.teams[ot].cd.scan||0)+2}）`}</button><button class="opt" type="button" data-a="oproute" aria-pressed="${ui.opMode==='route'}" ${rr?'':'disabled'}>${ui.opMode==='route'?'隊員をタップ':'ルート指示'}${rr?'':`（R${(G.teams[ot].cd.route||0)+2}）`}</button></div>`;}}
   let act='';
   if(G.phase==='plan'&&PLAN&&PLAN.team>=0){
@@ -3226,8 +3226,8 @@ function renderNpc(id){
   const t=npcById(id),team=npcTeam(id);
   app.innerHTML=`<div class="top"><h2>${esc(t.name)}</h2><button class="btn ghost sm" type="button" data-a="league">戻る</button></div>
   <div class="card"><p style="margin:0"><b>${esc(t.style)}</b>　<span class="muted small">得意マップ：${esc(MAPS[t.map].n)}　作戦：${esc(TAC[team.tac||'balanced'].n)}</span></p>${team.op?`<p class="small" style="margin:4px 0 0">オペレーター：<b>${esc(team.op.name)}</b> <span class="muted">情報処理${team.op.INF}・分析${team.op.ANA}・連携${team.op.LNK}</span></p>`:''}<p class="small muted" style="margin:4px 0 0">${esc(TAC[team.tac||'balanced'].d)}</p><p class="small" style="margin:6px 0 0">${esc(t.desc)}</p></div>
-  <div class="members">${team.members.map((m,i)=>{const p=npcPts(t.members[i]);return `<button class="mem memrow" type="button" data-a="agent" data-v="${id}:${i}"><span class="mav">${avatarFor(m,id,false,64)}</span><span class="mtx"><b>${esc(m.name)}</b>${i===0?' <span class="pos">隊長</span>':''} <span class="pos">${posOf(m)}</span><br><span class="small">個人 ${p}pt ${rankBadge(m,p)}</span>${(m.se||SE_OF[m.name])?`<br><span class="sefx small">${seLabel(m.se||SE_OF[m.name])}</span>`:''}<br><span class="small muted">${trigsOf(m).filter(isAtk).map(k=>TR[k].n).join('・')}</span></span><span class="mgo">›</span></button>`;}).join('')}</div>
-  <p class="small muted">隊員をタップすると隊員ページ（見た目・能力・トリガー構成）を開きます。</p>`;
+  <div class="members">${team.members.map((m,i)=>{const p=npcPts(t.members[i]);return `<button class="mem memrow" type="button" data-a="agent" data-v="${id}:${i}"><span class="mtx"><b>${esc(m.name)}</b>${i===0?' <span class="pos">隊長</span>':''} <span class="pos">${posOf(m)}</span><br><span class="small">個人 ${p}pt ${rankBadge(m,p)}</span>${(m.se||SE_OF[m.name])?`<br><span class="sefx small">${seLabel(m.se||SE_OF[m.name])}</span>`:''}<br><span class="small muted">${trigsOf(m).filter(isAtk).map(k=>TR[k].n).join('・')}</span></span><span class="mgo">›</span></button>`;}).join('')}</div>
+  <p class="small muted">隊員をタップすると隊員ページ（能力・トリガー構成）を開きます。</p>`;
 }
 
 
@@ -3240,7 +3240,7 @@ function pcLoad(){try{PC=JSON.parse(localStorage.getItem('rt-pc')||'null');}catc
 function pcSave(){try{localStorage.setItem('rt-pc',JSON.stringify(PC));}catch(e){}}
 const pcName=p=>`${p.sei} ${p.mei}`;
 function pcMember(p){const g=growthOf(Math.max(p.maxPts||4000,p.pts==null?4000:p.pts));const C=p.cls==='C';const first=p.main.find(k=>isAtk(k))||p.main[0];return {name:pcName(p),main:C?[first,'none','none','none']:p.main.slice(),sub:C?['none','none','none','none']:p.sub.slice(),T:p.T,TEC:Math.min(9,p.TEC+g.TEC),SUP:p.SUP,EVA:Math.min(9,p.EVA+g.EVA),MOB:p.MOB,CMD:Math.min(9,(p.CMD||4)+(p.cmdUp||0)),sk:(p.skills||[]).slice(),se:p.se||undefined};}
-function newPC(){const pr=PRESETS[0][0];const r0=hrng('n'+Date.now()+Math.random());return rollInto({look:{sk:r0(5),hs:r0(8),hc:r0(9),ey:r0(4),ec:r0(6),mo:r0(4),ac:0,uf:r0(4),uc:r0(12)},se:rollSE(0.1),sei:pick(SEI),mei:pick(MEI),cls:'B',main:pr[0].slice(),sub:pr[1].slice(),rerolls:REROLLS,rec:{matches:0,kills:0,downs:0},pts:4000,maxPts:4000,skills:[],cmdExp:0,cmdUp:0,created:Date.now()});}
+function newPC(){const pr=PRESETS[0][0];return rollInto({se:rollSE(0.1),sei:pick(SEI),mei:pick(MEI),cls:'B',main:pr[0].slice(),sub:pr[1].slice(),rerolls:REROLLS,rec:{matches:0,kills:0,downs:0},pts:4000,maxPts:4000,skills:[],cmdExp:0,cmdUp:0,created:Date.now()});}
 function freeAgent(){const p=pick(PRESETS)[Math.floor(Math.random()*3)];const m=rollInto({name:`${pick(SEI)} ${pick(MEI)}`.slice(0,7),main:p[0].slice(),sub:p[1].slice()});m.se=rollSE(0.15)||undefined;m.sk=autoSkills(m,npcPts(m));return {...withGrowth(m,npcPts(m)),grown:1};}
 
 /* ===== teammate growth ===== */
@@ -3301,7 +3301,7 @@ function renderRP(){
   const pl=inL?myPlace():null;
   const teamBox=inL?`<div class="card mine"><h2>${esc(L.me.team.name)}</h2><p class="small muted" style="margin:0 0 6px">${L.me.team.pcIdx===0?'あなたが隊長':'隊員として所属'}　作戦：${esc(TAC[L.me.team.tac||'balanced'].n)}　${pl?pl.text:''}</p>
      <p class="small" style="margin:0 0 6px">オペレーター：<b>${esc((L.me.team.op||{name:'未定'}).name)}</b> <span class="muted">情報処理${(L.me.team.op||{}).INF||'-'}・分析${(L.me.team.op||{}).ANA||'-'}・連携${(L.me.team.op||{}).LNK||'-'}</span>${L.me.team.pcIdx===0?' <button class="btn ghost sm" type="button" data-a="opscout">スカウト</button>':''}</p>
-     <div style="margin:0 0 10px">${L.me.team.members.map((x,i)=>i===L.me.team.pcIdx?`<p class="small" style="margin:4px 0"><b>${esc(x.name)}（あなた）</b></p>`:`<div class="row" style="margin:4px 0"><button class="mav mavbtn" type="button" data-a="agent" data-v="me:${i}" aria-label="${esc(x.name)}の隊員ページ">${avatarFor(x,'me',false,44)}</button><span class="small">${esc(x.name)} <span class="muted">${posOf(x)}・${trigsOf(x).filter(isAtk).map(k=>TR[k].n).join('/')}</span>${(x.se||SE_OF[x.name])?` <span class="sefx">${esc(SES[x.se||SE_OF[x.name]].n)}</span>`:''}<br><span class="muted">${(mateInit(x),x.pts)}pt・技術${x.TEC}・回避${x.EVA}・スキル${(x.sk||[]).length}　${x.games}試合${x.kills}撃破</span></span><button class="btn ghost sm" type="button" data-a="mateedit" data-v="${i}" style="margin-left:auto">トリガー</button></div>`).join('')}</div>
+     <div style="margin:0 0 10px">${L.me.team.members.map((x,i)=>i===L.me.team.pcIdx?`<p class="small" style="margin:4px 0"><b>${esc(x.name)}（あなた）</b></p>`:`<div class="row" style="margin:4px 0"><span class="small">${esc(x.name)} <span class="muted">${posOf(x)}・${trigsOf(x).filter(isAtk).map(k=>TR[k].n).join('/')}</span>${(x.se||SE_OF[x.name])?` <span class="sefx">${esc(SES[x.se||SE_OF[x.name]].n)}</span>`:''}<br><span class="muted">${(mateInit(x),x.pts)}pt・技術${x.TEC}・回避${x.EVA}・スキル${(x.sk||[]).length}　${x.games}試合${x.kills}撃破</span></span><span class="row" style="margin-left:auto;gap:6px"><button class="btn ghost sm" type="button" data-a="agent" data-v="me:${i}">隊員ページ</button><button class="btn ghost sm" type="button" data-a="mateedit" data-v="${i}">トリガー</button></span></div>`).join('')}</div>
      ${(L.me.growLog||[]).length?`<details class="tdesc" style="margin:0 0 8px"><summary>仲間の最近の成長</summary><p>${L.me.growLog.slice().reverse().map(g=>esc(g.s)).join('<br>')}</p></details>`:''}
      <p class="small muted" style="margin:0 0 8px">仲間も試合に出るたびに個人ポイントを得て、スキルを覚え技術・回避が伸びます（出場+40、撃破+60、生存+40、部隊が最多得点+40。防衛任務は半分ほど）。</p>
      <div class="row"><button class="btn" type="button" data-a="league">ランク戦へ</button><button class="btn ghost sm" type="button" data-a="pcleave">部隊を抜ける</button></div></div>`
@@ -3309,7 +3309,6 @@ function renderRP(){
   const rec=PC.rec||{matches:0,kills:0,downs:0};
   app.innerHTML=`<div class="top"><h2>ボーダー隊員</h2><button class="btn ghost sm" type="button" data-a="home">戻る</button></div>
   ${agentCardHTML({...m,sk:(PC.skills||[]).slice(),se:PC.se},{isPC:true,tid:pcInLeague()?'me':null,team:pcInLeague()?LEAGUE.me.team.name:'',capt:pcInLeague()&&LEAGUE.me.team.pcIdx===0,cls:PC.cls==='C'?'C級（訓練生）':(pcInLeague()&&LEAGUE.meIn==='A'?'A級':'B級'),pts:PC.pts==null?4000:PC.pts,
-    lookBtn:`<div class="row" style="justify-content:center;margin:-2px 0 4px"><button class="btn ghost sm" type="button" data-a="lookedit">見た目を変える</button></div>`,
     extraStats:`<div><span>指揮の経験</span><b>${PC.cmdExp||0}/${CMD_STEP}</b></div><div><span>ランク戦</span><b>${rec.matches}試合</b></div><div><span>撃破</span><b>${rec.kills}</b></div><div><span>被撃破</span><b>${rec.downs}</b></div>`,
     foot:`${PC.borrow?`<p class="small" style="margin:6px 0 0">見取り稽古で借りているスキル：${esc(SKILLS[PC.borrow].n)}（次の個人ランク戦のみ）</p>`:''}${PC.cls==='C'?'<p class="small" style="color:var(--t1);margin:8px 0 0">C級の間はメインの1つ目のトリガーだけ使えます。</p>':''}<div class="row" style="margin-top:8px"><button class="btn ghost sm" type="button" data-a="pcedit">トリガー構成を変える</button><button class="btn ghost sm" type="button" data-a="dex">トリガー性能を見る</button></div>`})}
   ${defCard()}
@@ -3688,14 +3687,14 @@ const idI=id=>id==='me'?0:IDS().indexOf(id)+1,idK=i=>i===0?'me':IDS()[i-1];
 function wMatches(w,ms){w.u(ms.length);for(const m of ms){w.u(m.map||0);w.u(CONDK.indexOf(m.cond||'clear'));const r=m.result;w.u(r?1:0);if(r){for(const id of m.teams){w.u(r.pts[id]);w.u(r.kills[id]);w.u(r.surv[id]);}w.u(r.bonus?m.teams.indexOf(r.bonus)+1:0);w.u(r.rounds||0);}}}
 function packSave(){
   pcLoad();if(!LEAGUE)lgLoad();
-  const w=bW();w.u(4);
+  const w=bW();w.u(6);
   // options
   w.u((SND.on?1:0)+(BGM.on?2:0));w.u(Math.round(SND.vol*10));w.u(Math.round(BGM.vol*100));w.u([0,120,180].indexOf(OPTS.planSec||0));
   // PC
   w.u(PC?1:0);
   if(PC){w.s(PC.sei);w.s(PC.mei);w.u(PC.cls==='C'?1:0);['T','TEC','SUP','EVA','MOB','CMD'].forEach(k=>w.u(PC[k]||0));for(let j=0;j<4;j++)w.u(tIdx(PC.main[j]));for(let j=0;j<4;j++)w.u(tIdx(PC.sub[j]));
     w.u(PC.se?SEK().indexOf(PC.se)+1:0);w.u(skMask(PC.skills));w.u(PC.pts==null?4000:PC.pts);w.u(PC.maxPts||4000);w.u(PC.bonusSP||0);w.u(PC.cmdExp||0);w.u(PC.cmdUp||0);w.u(PC.rerolls||0);
-    const rc=PC.rec||{},du=PC.duel||{},df=PC.def||{};w.u(rc.matches);w.u(rc.kills);w.u(rc.downs);w.u(du.w);w.u(du.l);w.u(du.d);w.u(df.runs);w.u(df.kills);w.u(Object.keys(df.clears||{}).reduce((m,k)=>m+Math.pow(2,+k),0));const lk=PC.look||lookOf(pcName(PC));['sk','hs','hc','ey','ec','mo','ac','uf','uc'].forEach(k=>w.u(lk[k]||0));}
+    const rc=PC.rec||{},du=PC.duel||{},df=PC.def||{};w.u(rc.matches);w.u(rc.kills);w.u(rc.downs);w.u(du.w);w.u(du.l);w.u(du.d);w.u(df.runs);w.u(df.kills);w.u(Object.keys(df.clears||{}).reduce((m,k)=>m+Math.pow(2,+k),0));}
   // league
   const L=LEAGUE;w.u(L?1:0);
   if(L){w.u(L.season);w.u(L.round);w.u(L.phase==='promo'?1:0);w.u(L.meIn==='A'?1:0);w.u(L.awarded?1:0);
@@ -3711,14 +3710,14 @@ function packSave(){
   return 'RW2:'+b64u(new Uint8Array(w.a));
 }
 function unpackSave(code){
-  const r=bR(ub64u(code.slice(4)));const ver=r.u();if(ver<2||ver>4)throw 0;
+  const r=bR(ub64u(code.slice(4)));const ver=r.u();if(ver<2||ver>6)throw 0;
   const data={};
   const sb=r.u(),vol=r.u()/10,bv=r.u()/100,pl=r.u();
   data['rt-sound']=JSON.stringify({on:!!(sb&1),vol,bgm:!!(sb&2),bvol:bv});data['rt-opts']=JSON.stringify({planSec:[0,120,180][pl]||0});
   let pc=null;
   if(r.u()){pc={sei:r.s(),mei:r.s()};pc.cls=r.u()?'C':'B';['T','TEC','SUP','EVA','MOB','CMD'].forEach(k=>pc[k]=r.u());pc.main=[0,1,2,3].map(()=>tKey(r.u()));pc.sub=[0,1,2,3].map(()=>tKey(r.u()));
     const se=r.u();if(se)pc.se=SEK()[se-1];pc.skills=skList(r.u());pc.pts=r.u();pc.maxPts=r.u();pc.bonusSP=r.u();pc.cmdExp=r.u();pc.cmdUp=r.u();pc.rerolls=r.u();
-    pc.rec={matches:r.u(),kills:r.u(),downs:r.u()};pc.duel={w:r.u(),l:r.u(),d:r.u()};const runs=r.u(),kills=r.u(),cm=r.u();pc.def={runs,kills,clears:{}};[0,1,2].forEach(i=>{if(Math.floor(cm/Math.pow(2,i))%2)pc.def.clears[i]=1;});pc.created=Date.now();if(ver>=4){pc.look={};['sk','hs','hc','ey','ec','mo','ac','uf','uc'].forEach(k=>pc.look[k]=r.u());}
+    pc.rec={matches:r.u(),kills:r.u(),downs:r.u()};pc.duel={w:r.u(),l:r.u(),d:r.u()};const runs=r.u(),kills=r.u(),cm=r.u();pc.def={runs,kills,clears:{}};[0,1,2].forEach(i=>{if(Math.floor(cm/Math.pow(2,i))%2)pc.def.clears[i]=1;});pc.created=Date.now();if(ver>=4&&ver<=5){for(let i=0;i<(ver>=5?10:9);i++)r.u();}
     data['rt-pc']=JSON.stringify(pc);}
   if(r.u()){
     const L={v:2,season:r.u(),round:r.u(),maxRound:8,hist:[],cur:null,init:null,promo:null};L.phase=r.u()?'promo':'season';L.meIn=r.u()?'A':'B';L.awarded=!!r.u();
@@ -4110,112 +4109,13 @@ function renderReplays(){
    <div class="row"><button class="btn sm" type="button" data-a="rpopen" data-v="${r.id}">再生する</button><button class="btn ghost sm" type="button" data-a="rpdel" data-v="${r.id}">削除</button></div></div>`;}).join(''):'<div class="card"><p class="small" style="margin:0">まだリプレイがありません。ランク戦や防衛任務に出撃すると、ここに保存されます。</p></div>'}`;
 }
 
-const AV={
-  skin:['#FFF0E6','#FBE1CF','#F1CDB0','#DDAE88','#B88563'],
-  hair:['#2A2A33','#4A3328','#7A5236','#B98A5A','#E2CF9E','#9AA3B3','#33467A','#963A3F','#F2F2F6'],
-  eye:['#22222A','#2A4C7D','#2E6B4E','#82302E','#5A3E7D','#9C6A12'],
-  hs:['ふんわり','ツンツン','ボブ','ロング','ポニーテール','流し前髪','ベリーショート','ツインテール'],
-  ey:['まる目','ジト目','キラ目','つり目'],
-  mo:['すまし','にっこり','とがり口','への字'],
-  ac:['なし','メガネ','ヘッドホン','ヘアピン','ばんそうこう','ゴーグル'],
-  uf:['ジャケット','ハイネック','コート','パーカー']
-};
-function avShade(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=(n>>8)&255,b=n&255;const m=x=>Math.max(0,Math.min(255,Math.round(f<0?x*(1+f):x+(255-x)*f)));return '#'+[m(r),m(g),m(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
-function avatarSVG(L,o){
-  o=o||{};const uni=o.uni||'#2B6C84',acc=o.acc||'#19F5C1',id='a'+Math.random().toString(36).slice(2,8);
-  const K='#1E2026',SW='stroke="'+K+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"';
-  const sk=AV.skin[L.sk%AV.skin.length],hc=AV.hair[L.hc%AV.hair.length],ec=AV.eye[L.ec%AV.eye.length];
-  const skD=avShade(sk,-0.14),hcD=avShade(hc,-0.22),hcL=avShade(hc,0.35),uD=avShade(uni,-0.35),uL=avShade(uni,0.3);
-  const hs=L.hs%8,ey=L.ey%4,mo=L.mo%4,ac=L.ac%6,uf=L.uf%4;
-  let s=`<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" class="avatar"${o.size?` width="${o.size}" height="${Math.round(o.size*1.2)}"`:''}>`;
-  s+=`<defs><linearGradient id="${id}bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${avShade(uni,0.78)}"/><stop offset="1" stop-color="${avShade(uni,0.55)}"/></linearGradient><clipPath id="${id}c"><rect width="100" height="120" rx="10"/></clipPath></defs>`;
-  s+=`<g clip-path="url(#${id}c)"><rect width="100" height="120" fill="url(#${id}bg)"/>`;
-  s+=`<circle cx="84" cy="18" r="22" fill="#fff" opacity=".25"/><circle cx="12" cy="98" r="16" fill="#fff" opacity=".18"/>`;
-  // back hair
-  const back={
-    0:`<path d="M20 60 C15 36 30 16 50 16 C70 16 85 36 80 60 L76 72 L68 66 L32 66 L24 72 Z" fill="${hcD}" ${SW}/>`,
-    1:`<path d="M22 56 C18 36 32 18 50 18 C68 18 82 36 78 56 L74 66 L26 66 Z" fill="${hcD}" ${SW}/>`,
-    2:`<path d="M20 60 C14 34 30 15 50 15 C70 15 86 34 80 60 C80 70 78 78 74 82 L26 82 C22 78 20 70 20 60Z" fill="${hcD}" ${SW}/>`,
-    3:`<path d="M20 58 C14 32 30 15 50 15 C70 15 86 32 80 58 C82 80 84 100 86 112 L14 112 C16 100 18 80 20 58Z" fill="${hcD}" ${SW}/>`,
-    4:`<path d="M22 56 C18 34 32 17 50 17 C68 17 82 34 78 56 Z" fill="${hcD}" ${SW}/><path d="M74 34 C92 36 94 58 88 80 C86 88 82 92 80 88 C84 72 82 54 70 44 Z" fill="${hcD}" ${SW}/>`,
-    5:`<path d="M21 58 C16 34 30 16 50 16 C70 16 84 34 79 58 L74 70 L26 70 Z" fill="${hcD}" ${SW}/>`,
-    6:`<path d="M25 52 C22 34 34 22 50 22 C66 22 78 34 75 52 Z" fill="${hcD}" ${SW}/>`,
-    7:`<path d="M22 56 C18 34 32 17 50 17 C68 17 82 34 78 56 Z" fill="${hcD}" ${SW}/><path d="M24 40 C8 46 6 74 12 92 C14 98 19 98 19 92 C16 76 18 60 28 50Z" fill="${hcD}" ${SW}/><path d="M76 40 C92 46 94 74 88 92 C86 98 81 98 81 92 C84 76 82 60 72 50Z" fill="${hcD}" ${SW}/>`
-  };
-  s+=back[hs];
-  // body (small, chibi)
-  if(uf===3)s+=`<path d="M28 104 C30 94 40 90 50 90 C60 90 70 94 72 104 Z" fill="${uD}" ${SW}/>`;
-  s+=`<path d="M16 122 C17 104 30 95 50 95 C70 95 83 104 84 122 Z" fill="${uni}" ${SW}/>`;
-  if(uf===0)s+=`<path d="M41 95 L50 108 L59 95" fill="${uL}" ${SW}/><line x1="50" y1="108" x2="50" y2="122" stroke="${K}" stroke-width="1.6"/>`;
-  if(uf===1)s+=`<path d="M36 98 C36 88 41 85 50 85 C59 85 64 88 64 98 C59 101 41 101 36 98Z" fill="${uD}" ${SW}/><path d="M50 99 L50 122" stroke="${K}" stroke-width="1.6"/>`;
-  if(uf===2)s+=`<path d="M38 95 L50 112 L44 122 L28 122 L30 100Z" fill="${uD}" ${SW}/><path d="M62 95 L50 112 L56 122 L72 122 L70 100Z" fill="${uD}" ${SW}/>`;
-  if(uf===3)s+=`<path d="M40 96 C44 101 56 101 60 96" fill="none" ${SW}/><path d="M45 100 L44 112 M55 100 L56 112" stroke="${K}" stroke-width="1.4"/><circle cx="44" cy="113" r="1.4" fill="${K}"/><circle cx="56" cy="113" r="1.4" fill="${K}"/>`;
-  s+=`<path d="M24 110 l4 -4 l4 4 l-4 4z" fill="${acc}" stroke="${K}" stroke-width="1.2"/>`;
-  // neck & head (big)
-  s+=`<path d="M44 84 L44 94 C46 97 54 97 56 94 L56 84 Z" fill="${skD}" ${SW}/>`;
-  s+=`<path d="M24 54 C24 32 76 32 76 54 C76 74 64 87 50 87 C36 87 24 74 24 54Z" fill="${sk}" ${SW}/>`;
-  s+=`<ellipse cx="34" cy="70" rx="4.5" ry="2.4" fill="#F28B8B" opacity=".35"/><ellipse cx="66" cy="70" rx="4.5" ry="2.4" fill="#F28B8B" opacity=".35"/>`;
-  // eyes (low on face, chibi)
-  const ex=[39,61],eyY=64;
-  const eye=(x,d)=>{
-    if(ey===0)return `<ellipse cx="${x}" cy="${eyY}" rx="3.4" ry="4.6" fill="${K}"/><circle cx="${x-1.2}" cy="${eyY-1.8}" r="1.3" fill="#fff"/>`;
-    if(ey===1)return `<path d="M${x-4} ${eyY-1} L${x+4} ${eyY-1} L${x+3.4} ${eyY+2.4} C${x+2} ${eyY+4.6} ${x-2} ${eyY+4.6} ${x-3.4} ${eyY+2.4} Z" fill="${K}"/><path d="M${x-5} ${eyY-1.4} L${x+5} ${eyY-1.4}" stroke="${K}" stroke-width="2" stroke-linecap="round"/><circle cx="${x-1.2}" cy="${eyY+0.8}" r="1" fill="#fff"/>`;
-    if(ey===2)return `<ellipse cx="${x}" cy="${eyY}" rx="3.8" ry="5" fill="${K}"/><ellipse cx="${x}" cy="${eyY+0.8}" rx="2.7" ry="3.7" fill="${ec}"/><circle cx="${x-1.3}" cy="${eyY-1.8}" r="1.5" fill="#fff"/><circle cx="${x+1.3}" cy="${eyY+2.2}" r=".8" fill="#fff"/>`;
-    return `<path d="M${x-4.4} ${eyY+(d<0?1.2:-1.8)} L${x+4.4} ${eyY+(d<0?-1.8:1.2)} L${x+3} ${eyY+3.2} C${x+1} ${eyY+4.8} ${x-2} ${eyY+4.6} ${x-3.4} ${eyY+3}Z" fill="${K}"/><circle cx="${x-0.6}" cy="${eyY+1}" r="1" fill="#fff"/>`;
-  };
-  s+=eye(ex[0],-1)+eye(ex[1],1);
-  // mouth
-  s+=mo===0?`<path d="M47.5 74.6 L52.5 74.6" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>`
-    :mo===1?`<path d="M46 73.4 Q50 77.6 54 73.4" fill="none" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>`
-    :mo===2?`<path d="M48.6 72.6 Q51.6 73.4 49.6 74.8 Q51.8 76 48.6 77" fill="none" stroke="${K}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`
-    :`<path d="M46.5 75.6 Q50 72.6 53.5 75.6" fill="none" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>`;
-  const lock=[0,1,4,5,7].includes(hs);
-  if(lock)s+=`<path d="M24 46 L20 76 L26 66 L28 78 L32 62 L31 50 Z" fill="${hc}" ${SW}/><path d="M76 46 L80 76 L74 66 L72 78 L68 62 L69 50 Z" fill="${hc}" ${SW}/>`;
-  // front hair (strands, covering forehead)
-  const front={
-    0:`<path d="M21 60 L18 50 L22 46 L20 36 L28 32 L28 23 L37 24 L42 15 L49 20 L56 14 L60 23 L69 22 L71 31 L79 35 L78 46 L82 50 L79 60 L75 52 L73 60 L68 48 L64 62 L60 46 L55 60 L52 44 L47 60 L43 46 L39 62 L35 48 L31 60 L28 52 L25 60 Z" fill="${hc}" ${SW}/>`,
-    1:`<path d="M21 56 C18 40 22 30 28 25 L24 14 L35 20 L37 8 L45 17 L51 5 L56 17 L64 8 L66 20 L76 14 L72 25 C78 30 82 40 79 56 L74 48 L70 56 L65 46 L60 56 L55 44 L50 56 L45 44 L40 56 L35 46 L30 56 L26 48 Z" fill="${hc}" ${SW}/>`,
-    2:`<path d="M20 70 C16 36 32 18 50 18 C68 18 84 36 80 70 L77 62 L76 52 C70 50 66 47 64 44 L60 54 L56 44 L52 54 L48 44 L44 54 L40 44 L36 52 L30 50 L24 54 L23 62 Z" fill="${hc}" ${SW}/>`,
-    3:`<path d="M20 76 C15 38 32 18 50 18 C68 18 85 38 80 76 L77 66 L76 52 C71 48 67 46 64 42 L60 54 L56 44 L52 56 L47 44 L43 56 L38 44 L34 54 L28 50 L24 54 L23 66 Z" fill="${hc}" ${SW}/>`,
-    4:`<path d="M22 56 C19 34 33 18 50 18 C67 18 81 34 78 56 L74 50 L71 58 L66 46 L62 58 L57 46 L52 58 L46 48 L41 58 L36 48 L31 58 L27 50 Z" fill="${hc}" ${SW}/><circle cx="76" cy="38" r="3.2" fill="${acc}" stroke="${K}" stroke-width="1.4"/>`,
-    5:`<path d="M21 60 L18 48 L23 44 L21 34 L30 30 L31 21 L41 22 L46 14 L53 19 L61 14 L64 22 L73 23 L74 33 L81 37 L78 48 L82 52 L78 58 L76 50 C68 40 56 38 48 44 L44 54 L40 46 L34 58 L30 50 L26 62 Z" fill="${hc}" ${SW}/>`,
-    6:`<path d="M25 52 C23 34 35 24 50 24 C65 24 77 34 75 52 L71 46 L67 50 L62 44 L57 49 L52 43 L47 49 L42 44 L37 49 L32 45 L28 50 Z" fill="${hc}" ${SW}/>`,
-    7:`<path d="M22 56 C19 34 33 18 50 18 C67 18 81 34 78 56 L74 50 L71 58 L66 46 L61 58 L56 46 L51 58 L46 46 L41 58 L36 46 L31 58 L27 50 Z" fill="${hc}" ${SW}/><circle cx="24" cy="44" r="3" fill="${acc}" stroke="${K}" stroke-width="1.4"/><circle cx="76" cy="44" r="3" fill="${acc}" stroke="${K}" stroke-width="1.4"/>`
-  };
-  s+=front[hs];
-  s+=`<path d="M36 26 Q44 21 54 22" fill="none" stroke="${hcL}" stroke-width="2.4" stroke-linecap="round" opacity=".8"/>`;
-  // accessories
-  if(ac===1)s+=`<rect x="31.5" y="58.5" width="15" height="11" rx="4" fill="#fff" fill-opacity=".18" stroke="${K}" stroke-width="1.8"/><rect x="53.5" y="58.5" width="15" height="11" rx="4" fill="#fff" fill-opacity=".18" stroke="${K}" stroke-width="1.8"/><path d="M46.5 62 Q50 60 53.5 62" fill="none" stroke="${K}" stroke-width="1.6"/>`;
-  if(ac===2)s+=`<path d="M20 56 C18 20 82 20 80 56" fill="none" stroke="${K}" stroke-width="5"/><path d="M20 56 C18 20 82 20 80 56" fill="none" stroke="#3A3E4A" stroke-width="2.6"/><rect x="14" y="52" width="10" height="16" rx="4.5" fill="#3A3E4A" ${SW}/><rect x="76" y="52" width="10" height="16" rx="4.5" fill="#3A3E4A" ${SW}/><rect x="16.5" y="56" width="3" height="8" rx="1.5" fill="${acc}"/>`;
-  if(ac===3)s+=`<rect x="62" y="38" width="12" height="3.6" rx="1.8" transform="rotate(-28 68 40)" fill="${acc}" stroke="${K}" stroke-width="1.2"/>`;
-  if(ac===4)s+=`<rect x="60" y="70" width="10" height="4.4" rx="1.8" transform="rotate(-14 65 72)" fill="#FFF3DC" stroke="${K}" stroke-width="1.2"/><path d="M63.5 70.4 L64.4 74.4 M66.4 69.8 L67.3 73.8" stroke="#D9C39E" stroke-width=".8"/>`;
-  if(ac===5)s+=`<path d="M22 34 C32 24 68 24 78 34" fill="none" stroke="${K}" stroke-width="4"/><rect x="31" y="24" width="16" height="10" rx="4.5" fill="#3A3E4A" ${SW}/><rect x="53" y="24" width="16" height="10" rx="4.5" fill="#3A3E4A" ${SW}/><rect x="33.5" y="26" width="11" height="6" rx="3" fill="${acc}" opacity=".85"/><rect x="55.5" y="26" width="11" height="6" rx="3" fill="${acc}" opacity=".85"/>`;
-  s+=`</g><rect x="1" y="1" width="98" height="118" rx="9.5" fill="none" stroke="${avShade(uni,-0.1)}" stroke-width="2"/></svg>`;
-  return s;
-}
-
-const UNI_COL=['#2B6C84','#8B2F33','#2E6B4E','#B27C1F','#4A3F7D','#3C4A5C','#1F5F8B','#7A3B5E','#5C6B2E','#8C5A2B','#2F7F7A','#5A2E2E'];
-const UNI_N=['青緑','赤','緑','山吹','紫','鉄色','青','赤紫','草色','茶','水色','えんじ'];
-function hstr(s){let h=2166136261;for(const ch of String(s))h=Math.imul(h^ch.codePointAt(0),16777619)>>>0;return h;}
-function hrng(seed){let a=hstr(seed)||1;return n=>{a^=a<<13;a>>>=0;a^=a>>>17;a^=a<<5;a>>>=0;return a%n;};}
-function lookOf(name){const r=hrng('look:'+name);const L={sk:r(5),hs:r(8),hc:r(9),ey:r(4),ec:r(6),mo:r(4),ac:0,uf:r(4),uc:r(12)};L.ac=r(10)<6?0:1+r(5);return L;}
-function teamUniform(tid){
-  if(tid==='me'&&typeof LEAGUE!=='undefined'&&LEAGUE&&LEAGUE.me){if(LEAGUE.me.from)return teamUniform(LEAGUE.me.from);if(typeof PC!=='undefined'&&PC&&PC.look)return {uf:PC.look.uf,uc:PC.look.uc};}
-  if(!tid||tid==='me')return null;const r=hrng('uni:'+tid);return {uf:r(4),uc:r(12)};
-}
-function lookFor(m,tid,isPC){
-  const base=isPC&&PC?(PC.look||lookOf(pcName(PC))):lookOf(m.name);const u=teamUniform(tid);
-  return u?{...base,uf:u.uf,uc:u.uc}:base;
-}
-const avatarFor=(m,tid,isPC,size)=>{const L=lookFor(m,tid,isPC);return avatarSVG(L,{uni:UNI_COL[L.uc%UNI_COL.length],size});};
 function agentCardHTML(m,o){
-  o=o||{};const L=o.look||lookFor(m,o.tid,o.isPC),se=m.se||SE_OF[m.name];
+  o=o||{};const se=m.se||SE_OF[m.name];
   const tile=k=>k==='none'?`<div class="tslot2 empty"><b>—</b></div>`:`<div class="tslot2"><b>${esc(TR[k].n)}</b><small>${esc(TYPE_N[TR[k].type]||'補助')}</small></div>`;
   const comps=[];m.main.forEach(a=>m.sub.forEach(b=>{const c=COMPS[compKey(a,b)];if(c&&!comps.includes(c.n))comps.push(c.n);}));
   return `<div class="card prof">
    <div class="profname"><b>${esc(m.name)}</b>${o.capt?'<span class="pos">隊長</span>':''}<span class="pos" style="margin-left:auto">${o.cls?esc(o.cls)+'　':''}${posOf(m)}</span></div>
    <p class="small muted" style="margin:2px 0 0">${o.team?`所属：${esc(o.team)}　`:''}${o.pts!=null?`個人 ${o.pts}pt `:''}${o.badges||''}</p>
-   <div class="profav">${avatarSVG(L,{uni:UNI_COL[L.uc%UNI_COL.length]})}</div>${o.lookBtn||''}
    <h3 class="profh">能力</h3>
    <div class="abil">${hexSVG(m,'var(--hexc)',true)}<div class="stl"><div><span>攻撃</span><b>${atkOf(m)}</b></div><div><span>防御</span><b>${defBase(m)}</b></div><div><span>行動力</span><b>${apOf(m)}</b></div><div><span>体力</span><b>${hpOf(m)}</b></div>${o.extraStats||''}</div></div>
    ${se?`<p class="small" style="margin:6px 0 0"><span class="sefx">サイドエフェクト：${seLabel(se)}</span><br><span class="muted">${esc(SES[se].d)}</span></p>`:''}
@@ -4233,19 +4133,6 @@ function renderAgent(){
   else{const t=npcById(a.tid);m=npcTeam(a.tid).members[a.i];teamName=t?t.name:'';capt=a.i===0;pts=npcPts(npcById(a.tid).members[a.i]);badges=rankBadge(m,pts);}
   if(!m){SCREEN='league';return renderLeague();}
   app.innerHTML=`<div class="top"><h2>隊員ページ</h2><button class="btn ghost sm" type="button" data-a="agentback">戻る</button></div>${agentCardHTML(m,{tid:a.tid,team:teamName,capt,pts,badges,foot,cls:a.tid&&A_IDS().includes(a.tid)?'A級':'B級'})}`;
-}
-function renderLookEdit(){
-  pcLoad();if(!PC){SCREEN='rp';return renderRP();}
-  const L=ui.lookDraft=ui.lookDraft||Object.assign({},PC.look||lookOf(pcName(PC)));
-  const teamU=pcInLeague()&&LEAGUE.me.from;
-  const SW={sk:AV.skin,hc:AV.hair,ec:AV.eye,uc:UNI_COL};
-  const row=(k,label,list)=>`<div class="lkrow"><span>${label}</span><button class="opt" type="button" data-a="lkc" data-v="${k}:-1" aria-label="前へ">◀</button><b>${SW[k]?`<i class="sw" style="background:${SW[k][L[k]%SW[k].length]}"></i>`:''}${esc(list[L[k]%list.length])}</b><button class="opt" type="button" data-a="lkc" data-v="${k}:1" aria-label="次へ">▶</button></div>`;
-  const nums=n=>Array.from({length:n},(_,i)=>String(i+1));
-  app.innerHTML=`<div class="top"><h2>見た目を変える</h2><button class="btn ghost sm" type="button" data-a="lkcancel">やめる</button></div>
-  <div class="card"><div class="profav">${avatarSVG(teamU?{...L,...teamUniform(LEAGUE.me.from)}:L,{uni:UNI_COL[(teamU?teamUniform(LEAGUE.me.from).uc:L.uc)%UNI_COL.length]})}</div>
-   ${row('sk','肌の色',nums(AV.skin.length))}${row('hs','髪型',AV.hs)}${row('hc','髪の色',nums(AV.hair.length))}${row('ey','目',AV.ey)}${row('ec','目の色',nums(AV.eye.length))}${row('mo','口もと',AV.mo)}${row('ac','小物',AV.ac)}
-   ${teamU?`<p class="small muted" style="margin:8px 0">隊服は所属部隊（${esc(LEAGUE.me.team.name)}）のものです。</p>`:`${row('uf','隊服',AV.uf)}${row('uc','隊服の色',UNI_N)}<p class="small muted" style="margin:6px 0">${pcInLeague()?'隊服は部隊のみんなとおそろいになります。':'部隊を作ると、この隊服が部隊の隊服になります。'}</p>`}
-   <div class="row" style="margin-top:10px"><button class="btn ghost sm" type="button" data-a="lkrand">おまかせ</button><button class="btn" type="button" data-a="lksave">この見た目にする</button></div></div>`;
 }
 
 /* ================= interaction ================= */
@@ -4320,11 +4207,6 @@ app.addEventListener('click',e=>{
   else if(a==='league'){lgLoad();SCREEN='league';render();}
   else if(a==='agent'){const [tid,i]=v.split(':');ui.agent={tid,i:+i,back:SCREEN,npc:ui.npc};SCREEN='agent';window.scrollTo(0,0);render();}
   else if(a==='agentback'){const b=ui.agent&&ui.agent.back;if(b==='npc')ui.npc=ui.agent.npc;SCREEN=b&&b!=='agent'?b:'rp';render();}
-  else if(a==='lookedit'){ui.lookDraft=null;SCREEN='lookedit';window.scrollTo(0,0);render();}
-  else if(a==='lkc'){const [k,d]=v.split(':');const n={sk:AV.skin.length,hs:AV.hs.length,hc:AV.hair.length,ey:AV.ey.length,ec:AV.eye.length,mo:AV.mo.length,ac:AV.ac.length,uf:AV.uf.length,uc:UNI_COL.length}[k];ui.lookDraft[k]=((ui.lookDraft[k]||0)+(+d)+n)%n;render();}
-  else if(a==='lkrand'){const r=hrng('r'+Date.now()+Math.random());ui.lookDraft={sk:r(5),hs:r(8),hc:r(9),ey:r(4),ec:r(6),mo:r(4),ac:r(10)<6?0:1+r(5),uf:r(4),uc:r(12)};render();}
-  else if(a==='lksave'){pcLoad();PC.look=Object.assign({},ui.lookDraft);pcSave();ui.lookDraft=null;sfx('chime');toast('見た目を変えました');SCREEN='rp';render();}
-  else if(a==='lkcancel'){ui.lookDraft=null;SCREEN='rp';render();}
   else if(a==='replays'){ui.rpBack=SCREEN;SCREEN='replays';render();}
   else if(a==='rpback'){SCREEN=ui.rpBack&&ui.rpBack!=='replays'?ui.rpBack:'rp';render();}
   else if(a==='rpopen'){if(MODE==='replay')repStop();goHome&&0;repStart(v);}
@@ -4383,7 +4265,7 @@ app.addEventListener('click',e=>{
   else if(a==='lgauto'){if(!LBUSY){const [lk,i]=v.split(':'),m=matchRef(lk,+i);if(!m)return;LBUSY=true;m.busy=1;render();lgSimMatch(m,()=>{LBUSY=false;delete m.busy;render();});}}
   else if(a==='lgcommit'){lgCommit();render();}
   else if(a==='lgwatch'){if(LBUSY)return;const [lk,i]=v.split(':'),m=matchRef(lk,+i);if(m&&isMeMatch(m)&&LEAGUE.me&&LEAGUE.me.pc){pcLoad();ui.prep={lk,i:+i,tac:LEAGUE.me.team.tac||'balanced',st:{}};SCREEN='prep';render();}else lgWatch(lk,+i);}
-  else if(a==='prepgo'){const p=ui.prep;lgWatch(p.lk,p.i);const ti=G.teams.findIndex(t=>t.pc);if(ti>=0){const tm=G.teams[ti],cap=leaderOf(G,ti)&&leaderOf(G,ti).id===tm.pc;if(cap){tm.tac=p.tac;for(const mi in p.st){const s=p.st[mi],uid=`u${ti}${mi}`;if(s==='free')continue;if(s==='follow')issueUnitOrder(G,ti,uid,{type:'follow',id:tm.pc},true);else if(s==='hold')issueUnitOrder(G,ti,uid,{type:'hold'},true);else issueUnitOrder(G,ti,uid,{type:'tac',tac:s},true);}}}render();}
+  else if(a==='prepgo'){const p=ui.prep;lgWatch(p.lk,p.i);const ti=G.teams.findIndex(t=>t.pc);if(ti>=0){const tm=G.teams[ti],cap=pcIsCmdr(G,ti);if(cap){tm.tac=p.tac;for(const mi in p.st){const s=p.st[mi],uid=`u${ti}${mi}`;if(s==='free')continue;if(s==='follow')issueUnitOrder(G,ti,uid,{type:'follow',id:tm.pc},true);else if(s==='hold')issueUnitOrder(G,ti,uid,{type:'hold'},true);else issueUnitOrder(G,ti,uid,{type:'tac',tac:s},true);}}}render();}
   else if(a==='preptac'){ui.prep.tac=v;render();}
   else if(a==='prepst'){const [mi,s]=v.split(':');ui.prep.st[mi]=s;render();}
   else if(a==='lgtab'){ui.lgTab=v;render();}
@@ -4452,17 +4334,17 @@ app.addEventListener('click',e=>{
   else if(a==='tutnext'){if(TUT){const s=(TUT.steps||TUT_STEPS)[TUT.i];if(s&&s.last){TUT=null;goHome();toast('チュートリアル完了！');return;}TUT.i++;render();}}
   else if(a==='tutskip'){TUT=null;goHome();}
   else if(a==='tutorial'){startTutorial();}
-  else if(a==='order'){if(sel&&canCtrl(sel)){const r=issueOrderN(G,sel.team,v);if(r.sent){sfx('radio');toast(`${ORDERS[v].n}を指示しました`);render();return;}G.cmdExp=Math.min(3,(G.cmdExp||0)+1);if(G.phase==='exec')aimAll(G);sfx('radio');toast(`${ORDERS[v].n}を指示（${r.n}/${r.tot}人が従う）`);render();}}
+  else if(a==='order'){const otm=sel&&canCtrl(sel)?sel.team:cmdTeam();if(otm>=0){const r=issueOrderN(G,otm,v);if(r.sent){sfx('radio');toast(`${ORDERS[v].n}を指示しました`);render();return;}G.cmdExp=Math.min(3,(G.cmdExp||0)+1);if(G.phase==='exec')aimAll(G);sfx('radio');toast(`${ORDERS[v].n}を指示（${r.n}/${r.tot}人が従う）`);render();}}
   else if(a==='fanmode'){FANMODE=FANMODE==='sel'?'all':'sel';render();}
   else if(a==='facyc'){if(sel&&canCtrl(sel)){const ms=atkModes(G,sel),i=ms.indexOf(sel.fa||0);setCtrl(sel,{fa:ms[(i+1)%ms.length]});toast(faLabel(G,sel));render();}}
   else if(a==='lead'){if(sel&&canCtrl(sel)){const f=v==='m'?'lm':'ls';setCtrl(sel,{[f]:!sel[f]});render();}}
   else if(a==='next'){if(MODE==='local'&&G&&G.phase==='exec')localStep();}
   else if(a==='autoall'){const own=G.units.filter(u=>!u.out&&canCtrl(u));const on=!own.some(u=>u.au);own.forEach(u=>setCtrl(u,{au:on,mu:0}));if(on)aimAll(G);render();}
   else if(a==='focus'){
-    const tm=sel&&canCtrl(sel)?sel.team:(viewTeam()>=0?viewTeam():(G.units.find(u=>!u.out&&canCtrl(u))||{}).team);
+    const tm=sel&&canCtrl(sel)?sel.team:(viewTeam()>=0?viewTeam():cmdTeam()>=0?cmdTeam():(G.units.find(u=>!u.out&&canCtrl(u))||{}).team);
     if(tm==null){toast('先に自分の隊員を選んでください');return;}
     setFocus(tm,v||null);
-    {const t=G.teams[tm];if(v&&t&&t.pc&&leaderOf(G,tm)&&leaderOf(G,tm).id===t.pc){const r=issueOrderN(G,tm,'focus',v);G.cmdExp=Math.min(3,(G.cmdExp||0)+1);toast(r.sent?'集中攻撃を指示しました':`集中攻撃を指示（${r.n}/${r.tot}人が従う）`);}}
+    {const t=G.teams[tm];if(v&&t&&t.pc&&pcIsCmdr(G,tm)){const r=issueOrderN(G,tm,'focus',v);G.cmdExp=Math.min(3,(G.cmdExp||0)+1);toast(r.sent?'集中攻撃を指示しました':`集中攻撃を指示（${r.n}/${r.tot}人が従う）`);}}
     if(v){
       const tg=uById(G,v);
       for(const u of G.units.filter(x=>!x.out&&x.team===tm&&canCtrl(x))){
