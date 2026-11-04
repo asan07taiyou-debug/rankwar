@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ランク戦タクティクス v6.3</title>
+<title>ランク戦タクティクス v6.6</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -593,6 +593,27 @@ body{background:var(--bg);color:var(--ink)}
 .memrow .mtx{flex:1;min-width:0;line-height:1.5}
 .memrow .mgo{font-size:26px;color:var(--muted)}
 .cmdpanel{border:1.5px dashed var(--frame,var(--t0));padding:6px 8px;margin:0 0 6px;width:100%}
+
+/* v6.4 landscape phones */
+@media (orientation:landscape) and (max-height:560px){
+ .bm{grid-template-columns:1fr minmax(270px,36%);grid-template-rows:auto 1fr}
+ .bm-top{grid-column:1/3;padding:3px 8px;gap:4px}
+ .bm-top .opt,.bm-top .chip{padding-top:3px;padding-bottom:3px}
+ .bm-view{grid-row:2;grid-column:1}
+ .bm-dock{grid-row:2;grid-column:2;align-content:start;border-top:0!important;border-left:2px solid var(--frame,var(--line));overflow:auto;padding:6px 8px;gap:5px}
+ .bm-units{flex-wrap:wrap}
+ .bmu{flex:1 1 30%;padding:4px 6px}
+ .bm-row{grid-template-columns:1fr auto;align-items:start}
+ .joy{width:84px;height:84px}
+ .bm-mini{width:66px;height:66px}
+ .bm-sheet{left:auto;width:min(420px,60%);max-height:100%;top:0;border-radius:16px 0 0 16px}
+ .tutw{right:80px}
+ .bm-op{max-width:55%}
+ .home,.top,.card{max-width:760px}
+ .bmtiles{grid-template-columns:1fr}
+ .bmt{padding:4px 6px}
+ .bmact{position:sticky;bottom:0;z-index:3;background:var(--panel);padding:4px 0 2px;box-shadow:0 -10px 10px -6px var(--panel)}
+}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#071A22">
@@ -710,7 +731,7 @@ function shieldUp(S,u,slot){return (slot==='m'?mainK(u):subK(u))==='shield'&&!sh
 function shieldsFacing(S,v,a){return ['m','s'].filter(s=>shieldUp(S,v,s)&&adiff(angTo(v,a.x,a.y),v[SHK[s][3]])<=clamp(v[SHK[s][2]],20,90));}
 function absorb(S,v,a,raw,o){
   if(o.lead||o.genyo)return {body:raw,blk:0,brk:0};
-  let rem=raw,blk=0,brk=0;const mult=(o.pierce?2:o.melee?MELEE_SHIELD:1)*(o.koatsu?1.3:1);
+  let rem=raw,blk=0,brk=0;const mult=(o.pierce?2:o.melee?(a&&sk(a,'tatekuzushi')?2:MELEE_SHIELD):1)*(o.koatsu?1.3:1);
   for(const s of shieldsFacing(S,v,a)){
     if(rem<=0)break;
     const [fk,bk,wk]=SHK[s],mx=shieldMax(v,clamp(v[wk],20,90));let hp=shFrac(v,s)*mx;
@@ -723,7 +744,7 @@ function absorb(S,v,a,raw,o){
 function estBody(S,v,f,a){
   const raw=Math.max(1,f.pow+senkuBonus(f,a,v)-defOf(v,f,a));
   if(f.lead||f.genyo)return {body:raw,shd:0};
-  let hp=0;for(const s of shieldsFacing(S,v,a))hp+=shieldHP(v,s)/(f.pierce?2:f.type==='melee'?MELEE_SHIELD:1);
+  let hp=0;for(const s of shieldsFacing(S,v,a))hp+=shieldHP(v,s)/(f.pierce?2:f.type==='melee'?(a&&sk(a,'tatekuzushi')?2:MELEE_SHIELD):1);
   return {body:Math.max(0,raw-hp),shd:Math.min(raw,hp)};
 }
 const apOf=u=>(u.MOB||10)+(sk(u,'kenkyaku')?1:0)+(has(u,'scorpion')?1:0)+(['main','sub'].some(s=>u[s].includes('thruster')&&u[s].includes('raygust'))?2:0);
@@ -751,7 +772,23 @@ const SKILLS={
   takanome:{n:'鷹の目',cat:'共通',cost:1,d:'視界+2'},
   kenrou:{n:'堅牢シールド',cat:'共通',cost:2,d:'シールドの耐久+25％'},
   engo:{n:'援護の心得',cat:'共通',cost:2,d:'援護の効果（命中・威力）が2倍'},
-  nebari:{n:'粘り',cat:'共通',cost:2,d:'体力が3割を切ると被ダメージ−1'}
+  nebari:{n:'粘り',cat:'共通',cost:2,d:'体力が3割を切ると被ダメージ−1'},
+  rengeki:{n:'連撃',cat:'近距離',cost:2,d:'近接攻撃が当たると、20％で威力1.5倍'},
+  tosshin:{n:'突進',cat:'近距離',cost:2,d:'離れた敵への近接攻撃（旋空・スラスター・踏み込み・モールクロー）の行動力が1になる'},
+  tatekuzushi:{n:'盾崩し',cat:'近距離',cost:2,d:'近接攻撃のシールドへのダメージが1.5倍から2倍に'},
+  okidama:{n:'置き弾',cat:'中距離',cost:2,d:'動かなかった手番の射撃・炸裂の命中+10'},
+  yudou:{n:'誘導上手',cat:'中距離',cost:1,d:'ハウンド・バイパー・合成弾の命中+8'},
+  setsuyaku:{n:'節約射撃',cat:'中距離',cost:2,d:'射撃・炸裂のトリオン消費−1（最低1）'},
+  shoujun:{n:'照準固定',cat:'狙撃',cost:1,d:'同じ敵を続けて狙撃すると命中+10'},
+  kousho:{n:'高所の利',cat:'狙撃',cost:2,d:'高さ2以上の建物の上から狙撃すると威力+2'},
+  renkei:{n:'連携攻撃',cat:'オールラウンダー',cost:2,d:'同じ手番に味方が攻撃した敵への命中+8'},
+  nitou:{n:'二刀の心得',cat:'オールラウンダー',cost:2,d:'フルアタック（メインとサブ同時攻撃）の威力+1'},
+  jikyu:{n:'持久力',cat:'共通',cost:2,d:'トリオンの最大値+12'},
+  oukyu:{n:'応急処置',cat:'共通',cost:2,d:'被弾による漏出が半分'},
+  onmitsu:{n:'隠密行動',cat:'共通',cost:1,d:'バッグワーム・カメレオンのトリオン消費が半分'},
+  touha:{n:'地形踏破',cat:'共通',cost:1,d:'川と瓦礫の移動コストの増加を受けない'},
+  fukutsu:{n:'不屈',cat:'共通',cost:3,d:'1試合に1回、緊急脱出するダメージを受けても体力1で踏みとどまる'},
+  shikikan:{n:'指揮官',cat:'共通',cost:2,d:'隊長のとき、部隊・仲間への指示に従う確率+15％'}
 };
 const sk=(u,id)=>!!(u&&u.sk&&u.sk.includes(id));
 const isAR=u=>{const k=attacksOf(u).map(x=>TR[x].type);return k.includes('melee')&&k.some(t=>t==='shot'||t==='blast'||t==='snipe');};
@@ -881,9 +918,10 @@ const TRI_SHOT={asteroid:1,hound:1,viper:1,meteora:2,rifle:1,handgun:1,shotgun:1
 const TRI_DEPLOY={kogetsu:2,scorpion:1,raygust:2,shield:1};
 const TRI_TICK={bagworm:0.25,chameleon:0.5};
 const TRI_ACT={escudo:4,teleporter:5,idaten:3,jump:1,wire:0.5};
-const triMaxOf=u=>20+u.T*8;
+const triMaxOf=u=>20+u.T*8+(sk(u,'jikyu')?12:0);
 let LEAK_K=0.06,LEAK_T=6;const LEAK_CAP=3;
 const leakOf=u=>Math.min(LEAK_CAP,(u.wounds||[]).reduce((s,w)=>s+w.r,0));
+const shotTriU=(u,f)=>{const c=shotTri(f);return (u&&sk(u,'setsuyaku')&&c>1&&(f.type==='shot'||f.type==='blast'))?c-1:c;};
 function shotTri(f){let c=f.comp?(TRI_SHOT[f.k]||0)+(TRI_SHOT[f.k2]||0):(TRI_SHOT[f.k]||0);if(f.lead)c+=1;if(f.mark)c+=1;return c;}
 function useTri(S,u,n,why){if(!n||u.out)return true;if(u.se==='tainai')n*=0.9;u.tri=Math.max(0,(u.tri==null?triMaxOf(u):u.tri)-n);if(u.tri<=0.001){u.tri=0;u.out=true;S.log.push({r:S.turn.round,t:`${nm(S,u)} トリオン切れで緊急脱出`});S.triOut=(S.triOut||[]).concat([u.id]);}return !u.out;}
 const ORDERS={rush:{n:'突撃',tac:'rush',d:'全員で距離を詰めて攻める'},hold:{n:'待機・防御',tac:'turtle',d:'その場で固まって守る'},gather:{n:'集合',tac:'escort',d:'隊長の近くに集まる'},hide:{n:'潜伏',tac:'stealth',d:'バッグワームで隠れて動く'},focus:{n:'集中攻撃',tac:null,d:'指定した敵を全員で狙う'}};
@@ -937,11 +975,11 @@ function unitTac(S,u){const uo=uoOf(S,u);if(uo&&uo.type==='tac')return uo.tac;co
 function uoOf(S,u){const t=S.teams[u.team],o=t&&t.uo&&t.uo[u.id];if(!o||!o.ok)return null;if((o.type==='target'||o.type==='follow')){const x=uById(S,o.id);if(!x||x.out)return null;}return o;}
 function issueUnitOrder(S,team,uid,ord,force){
   const t=S.teams[team];t.uo=t.uo||{};const L=cmdrOf(S,team),cmd=L?(L.CMD||4):3;
-  const ok=force||Math.random()<clamp(40+cmd*7+opOf(S,team).LNK*3+(L&&L.se==='koe'?20:0),40,100)/100;
+  const ok=force||Math.random()<clamp(40+cmd*7+opOf(S,team).LNK*3+(L&&L.se==='koe'?20:0)+(L&&sk(L,'shikikan')?15:0),40,100)/100;
   t.uo[uid]={...ord,ok,round:S.turn.round};return ok;
 }
 function issueOrder(S,team,type,targetId){
-  const L=cmdrOf(S,team),cmd=L?(L.CMD||4):3,p=clamp(40+cmd*7+opOf(S,team).LNK*3+(L&&L.se==='koe'?20:0),40,100)/100,t=S.teams[team];
+  const L=cmdrOf(S,team),cmd=L?(L.CMD||4):3,p=clamp(40+cmd*7+opOf(S,team).LNK*3+(L&&L.se==='koe'?20:0)+(L&&sk(L,'shikikan')?15:0),40,100)/100,t=S.teams[team];
   const obey={};let n=0,tot=0;
   for(const u of S.units)if(!u.out&&u.team===team&&u.id!==t.pc){tot++;if(Math.random()<p){obey[u.id]=true;n++;}}
   t.order={type,round:S.turn.round,obey,target:targetId||null,by:L?L.id:null};
@@ -958,7 +996,12 @@ const COMPS={
   'hound+hound':{n:'ホーネット',type:'shot',mul:1.0,hit:25,los:false,d:'強い追尾弾。射線不要、命中+25'},
   'viper+viper':{n:'コブラ',type:'shot',mul:1.1,hit:15,los:false,needSeen:true,d:'弾道を引ける強化弾。射線不要、命中+15'},
   'hound+meteora':{n:'サラマンダー',type:'blast',mul:0.9,los:false,d:'追尾する炸裂弾。射線不要、周囲8マスにも当たる。建物も削って崩せる'},
-  'meteora+viper':{n:'トマホーク',type:'blast',mul:1.0,los:false,needSeen:true,d:'弾道を引ける炸裂弾。射線不要、周囲8マスにも当たる。建物も削って崩せる'}
+  'meteora+viper':{n:'トマホーク',type:'blast',mul:1.0,los:false,needSeen:true,d:'弾道を引ける炸裂弾。射線不要、周囲8マスにも当たる。建物も削って崩せる'},
+  'asteroid+hound':{n:'ファルコン',type:'shot',mul:1.1,hit:10,los:false,d:'追尾する徹甲弾。射線不要で、命中+10・威力1.1倍。ホーネットより当たりにくいが一撃が重い'},
+  'asteroid+viper':{n:'ランス',type:'shot',mul:1.1,los:false,needSeen:true,rplus:2,rcap:9,d:'長く引いた弾道で撃ち抜く直進弾。見えている敵なら射線不要、射程+2（最大9マス）、威力1.1倍'},
+  'asteroid+meteora':{n:'ハンマーヘッド',type:'blast',mul:1.0,center:1.3,splash:0.5,bld:2,rmax:5,d:'着弾で炸裂する徹甲弾。狙った敵に威力1.3倍、周り8マスは半分。建物を2倍削る。射程5マス・射線が必要'},
+  'hound+viper':{n:'スワロー',type:'shot',mul:0.7,hit:15,los:false,split:2,d:'2つに分かれて飛ぶ追尾弾。扇の中の2体にそれぞれ威力0.7倍で当たる。射線不要・命中+15'},
+  'meteora+meteora':{n:'クラスター',type:'blast',mul:0.8,radius:2,d:'5×5マスの大炸裂。威力0.8倍で広い範囲を巻き込み、建物も広く崩す。味方も巻き込むので注意'}
 };
 const COMP_TEC=6;
 const compKey=(a,b)=>[a,b].sort().join('+');
@@ -966,7 +1009,8 @@ function compSpec(S,u){
   const a=mainK(u),b=subK(u),c=COMPS[compKey(a,b)];
   if(!c||u.TEC<COMP_TEC-(sk(u,'gousei')?1:0))return null;
   const sa=specOf(S,u,a,'m'),sb=specOf(S,u,b,'s');
-  return {k:a,k2:b,comp:true,type:c.type,name:c.n,los:c.los!==false,needSeen:!!c.needSeen,pow:Math.round((sa.pow+sb.pow)*c.mul),hit:c.hit||0,pierce:!!c.pierce,still:false,rmin:c.rmin||Math.max(sa.rmin,sb.rmin),rmax:c.rmax||Math.min(sa.rmax,sb.rmax),coef:c.k||Math.max(sa.k||120,sb.k||120)};
+  const rmax0=c.rmax||Math.min(sa.rmax,sb.rmax);
+  return {k:a,k2:b,comp:true,type:c.type,name:c.n,los:c.los!==false,needSeen:!!c.needSeen,pow:Math.round((sa.pow+sb.pow)*c.mul),hit:c.hit||0,pierce:!!c.pierce,still:false,rmin:c.rmin||Math.max(sa.rmin,sb.rmin),rmax:c.rplus?Math.min(c.rcap||99,rmax0+c.rplus):rmax0,coef:c.k||Math.max(sa.k||120,sb.k||120),center:c.center||0,splash:c.splash||0,bld:c.bld||1,radius:c.radius||1,split:c.split||0};
 }
 const bothAtk=u=>isAtk(mainK(u))&&isAtk(subK(u));
 function atkModes(S,u){const m=[0];if(bothAtk(u)){m.push(1);if(compSpec(S,u))m.push(2);}return m;}
@@ -1025,9 +1069,10 @@ const ctrlOf=u=>{const o={};CTRLF.forEach(f=>o[f]=u[f]);return o;};
 /* ================= engine ================= */
 const terr=(S,x,y)=>{if(x<0||y<0||x>=N||y>=N)return null;if(S.thN){const v=S.th[x+','+y];if(v!==undefined)return v>0?String(v):'_';}return MAPS[S.mapId].rows[y][x];};
 const BHP=8;
-function blastTerrain(S,cx,cy,pow,r){
+function blastTerrain(S,cx,cy,pow,r,rad){
+  rad=rad||1;
   S.th=S.th||{};S.bhp=S.bhp||{};S.crum=S.crum||[];
-  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+  for(let dy=-rad;dy<=rad;dy++)for(let dx=-rad;dx<=rad;dx++){
     const x=cx+dx,y=cy+dy,t=terr(S,x,y);if(!t||!(t>='1'&&t<='9'))continue;
     const k=x+','+y;let hh=+t,hp=S.bhp[k]!=null?S.bhp[k]:BHP;hp-=pow;let fell=0;
     while(hp<=0&&hh>0){hh--;hp+=BHP;fell++;}
@@ -1082,7 +1127,8 @@ function stepCost(S,u,fx,fy,x,y){
   const g=has(u,'grass'),up=Math.max(0,hAt(S,x,y)-hAt(S,fx,fy));
   const w=S.wm&&S.wm[keyOf(x,y)];
   if(w!=null&&w===u.team)return 0.5;
-  let c=t==='~'&&!g?(S.cond==='rain'?3:2):(t==='_'&&!g?2:1);
+  const tp=sk(u,'touha');
+  let c=t==='~'&&!g&&!tp?(S.cond==='rain'?3:2):(t==='_'&&!g&&!tp?2:1);
   if(up>0)c+=Math.max(0,(g?Math.max(0,up-3):up)-(u.se==='heiko'?1:0));
   if(w!=null&&w!==u.team)c+=2;
   return c;
@@ -1174,9 +1220,10 @@ function pickAttack(S,u,t,det,X,tick){
       else if((f.los||(f.type==='melee'&&!close))&&!(close?canSee(S,u,e):canSeeNW(S,u,e)))continue;
       if(f.needSeen&&det[e.id]==='blip')continue;
       if(f.type!=='melee'){const wk=wallOnLine(S,u,e);if(wk&&S.walls[wk].team===u.team)continue;}
-      const cost=f.comp?(sk(u,'gousei')?1:2):f.type==='melee'&&!close?2:1;if(cost>t.ap)continue;
-      if(shotTri(f)>(u.tri==null?99:u.tri))continue;
-      const targets=f.type==='blast'?S.units.filter(v=>!v.out&&dist(v,e)<=1):[e];
+      const cost=f.comp?(sk(u,'gousei')?1:2):f.type==='melee'&&!close?(sk(u,'tosshin')?1:2):1;if(cost>t.ap)continue;
+      if(shotTriU(u,f)>(u.tri==null?99:u.tri))continue;
+      let targets=f.type==='blast'?S.units.filter(v=>!v.out&&dist(v,e)<=(f.radius||1)):[e];
+      if(f.split>1){const others=S.units.filter(o=>o!==e&&!o.out&&o.team!==u.team&&det[o.id]&&inFan(u,f,o.x,o.y)&&!(f.needSeen&&det[o.id]==='blip')).sort((p,q)=>edist(u,p.x,p.y)-edist(u,q.x,q.y));targets=[e,...others.slice(0,f.split-1)];}
       let val=0;
       for(const v of targets){
         const eb=estBody(S,v,f,u),ex=f.lead?1.5:(eb.body+0.35*eb.shd+(f.type==='melee'&&eb.body>0?2:0))*Math.max(5,hitChance(u,v,f,false,det[v.id]==='blip'&&!(f.comp&&f.hit>=25))-(pin&&f.type!=='melee'?PIN_HIT:0))/100;
@@ -1184,7 +1231,7 @@ function pickAttack(S,u,t,det,X,tick){
         else if(det[v.id]){const fo=focusOf(S,u.team),uo=uoOf(S,u);if(uo&&uo.type==='target'&&uo.id===v.id)val+=8;if(smartOn(S,u.team,'target')){if(v.leak>0.4)val+=1;if(analyzed(S,u.team,v.id)&&v.triMax&&v.tri<v.triMax*0.3)val+=1.5;if(v.hp<v.hpMax*0.3)val+=1;}val+=ex+(isFocus(X,v,u,tick)?2:0)+(!f.lead&&ex>=v.hp?4:0)+(fo&&fo.id===v.id?6:0);}
       }
       val/=cost;
-      if(val>0&&(!best||val>best.val))best={f,k:f.k,targets,val,cost,cx:e.x,cy:e.y};
+      if(val>0&&(!best||val>best.val))best={f,k:f.k,targets,val,cost,cx:e.x,cy:e.y,cid:e.id};
     }
     return best;
   };
@@ -1278,7 +1325,7 @@ function stepExec(S){
     const now=[mainK(u),subK(u)],prev=u.lastAct||[];
     for(const k of now){if(prev.includes(k))continue;if(TRI_DEPLOY[k])useTri(S,u,TRI_DEPLOY[k]);if(k==='escudo')u.escPend=true;}
     u.lastAct=now;if(u.out)continue;
-    for(const k of now)if(TRI_TICK[k])useTri(S,u,TRI_TICK[k]*(u.se==='teinen'?0.5:1));
+    for(const k of now)if(TRI_TICK[k])useTri(S,u,TRI_TICK[k]*(u.se==='teinen'||sk(u,'onmitsu')?0.5:1));
     if(u.out)continue;
     if(u.wounds&&u.wounds.length){u.leak=leakOf(u);u.wounds=u.wounds.map(w=>({...w,t:w.t-1})).filter(w=>w.t>0);}
     if(u.leak>0){useTri(S,u,u.leak);u.leak=leakOf(u);if(u.out){S.leakOut=(S.leakOut||[]).concat([u.id]);const s=uById(S,u.leakSrc);if(s&&s.team!==u.team){S.teams[s.team].score+=1;S.kills=S.kills||{};S.kills[s.id]=(S.kills[s.id]||0)+1;}continue;}}
@@ -1327,8 +1374,8 @@ function stepExec(S){
   const evs=[];
   for(const a of list){
     if(a.u.out)continue;
-    if(!useTri(S,a.u,shotTri(a.f)))continue;
-    if(a.f.type==='blast'&&a.cx!=null)blastTerrain(S,a.cx,a.cy,a.f.pow,r);
+    if(!useTri(S,a.u,shotTriU(a.u,a.f)))continue;
+    if(a.f.type==='blast'&&a.cx!=null)blastTerrain(S,a.cx,a.cy,Math.round(a.f.pow*(a.f.bld||1)),r,a.f.radius||1);
     const pin=a.f.type!=='melee'&&pinnedBy(S,a.u);
     for(const v of a.targets){
       if(v.out)continue;
@@ -1338,12 +1385,18 @@ function stepExec(S){
       if(a.split&&a.u.se==='heiretsu')kb+=5;
       if(a.u.adv)kb+=5;
       if(!pin&&S.units.some(x=>!x.out&&x.team!==a.u.team&&x.se==='atsu'&&dist(x,a.u)<=1))kb-=5;
-      if(a.u.se==='kashu'){if(a.u.kfT===v.id)a.u.kfN=Math.min(4,(a.u.kfN||0)+1);else{a.u.kfT=v.id;a.u.kfN=0;}kb=3*a.u.kfN;}
+      if(a.u.se==='kashu'){if(a.u.kfT===v.id)a.u.kfN=Math.min(4,(a.u.kfN||0)+1);else{a.u.kfT=v.id;a.u.kfN=0;}kb+=3*a.u.kfN;}
+      if(sk(a.u,'okidama')&&(a.f.type==='shot'||a.f.type==='blast')&&X.st[a.u.id]&&!X.st[a.u.id].mv)kb+=10;
+      if(sk(a.u,'yudou')&&(a.f.comp||a.k==='hound'||a.k==='viper'))kb+=8;
+      if(sk(a.u,'shoujun')&&a.f.type==='snipe'){if(a.u.snT===v.id)kb+=10;a.u.snT=v.id;}
+      if(sk(a.u,'renkei')&&f)kb+=8;
       const hit=Math.random()*100<Math.max(5,hitChance(a.u,v,a.f,f,blip)+cmdHit(S,a.u)+kb-(pin?(sk(a.u,'joukyou')?PIN_HIT/2:PIN_HIT):0));
       let dmg=0,crit=false,sh=false;
       if(hit&&!a.f.lead){
-        dmg=a.f.pow+senkuBonus(a.f,a.u,v)-defOf(v,a.f,a.u)+(f?Math.floor(a.u.SUP/3)*(sk(a.u,'engo')?2:1):0)-(a.f.type==='melee'&&sk(v,'ukenagashi')?2:0);
-        crit=Math.random()*100<(a.u.TEC*2+(a.f.critb||0)+(a.u.se==='kyoun'?5:0))*(v.se==='kyoun'?0.5:1);if(crit)dmg=Math.floor(dmg*1.5);dmg=Math.max(1,dmg);
+        dmg=(a.f.center?Math.round(a.f.pow*(v.id===a.cid?a.f.center:(a.f.splash||1))):a.f.pow)+senkuBonus(a.f,a.u,v)-defOf(v,a.f,a.u)+(f?Math.floor(a.u.SUP/3)*(sk(a.u,'engo')?2:1):0)-(a.f.type==='melee'&&sk(v,'ukenagashi')?2:0);
+        if(sk(a.u,'kousho')&&a.f.type==='snipe'&&hAt(S,a.u.x,a.u.y)>=2)dmg+=2;
+        if(sk(a.u,'nitou')&&a.f.full)dmg+=1;
+        crit=Math.random()*100<(a.u.TEC*2+(a.f.critb||0)+(a.u.se==='kyoun'?5:0))*(v.se==='kyoun'?0.5:1);if(crit)dmg=Math.floor(dmg*1.5);if(a.f.type==='melee'&&sk(a.u,'rengeki')&&Math.random()<0.2)dmg=Math.floor(dmg*1.5);dmg=Math.max(1,dmg);
       }
       evs.push({a:a.u.id,v:v.id,ax:a.u.x,ay:a.u.y,vx:v.x,vy:v.y,k:a.k,nm:a.f.name,comp:a.f.comp?1:0,ct:a.f.comp?a.f.type:undefined,k2:a.f.k2,fa:a.f.full?1:0,sen:a.f.senku?1:0,thr:a.f.thr?1:0,hit,dmg,raw:dmg,crit,f,sh,ko:0,lead:a.f.lead?1:0,mark:a.f.mark&&hit?1:0,gy:a.f.genyo?1:0,pc:a.f.pierce?1:0,ml:a.f.type==='melee'?1:0,pin:pin?1:0});
     }
@@ -1362,8 +1415,9 @@ function stepExec(S){
     if(e.dmg<=0)continue;
     if(sk(v,'nebari')&&v.hp<v.hpMax*0.3&&e.dmg>1)e.dmg-=1;
     v.hp-=e.dmg;
-    v.wounds=(v.wounds||[]).concat([{r:e.dmg*LEAK_K*(e.ml?2:1)*(v.se==='koshitsu'?0.5:1),t:LEAK_T*(e.ml?1.5:1)*(S.units.some(x=>!x.out&&x.team===v.team&&x.id!==v.id&&x.se==='shiketsu'&&dist(x,v)<=2)?0.5:1)}]);v.leak=leakOf(v);v.leakSrc=u.id;
+    v.wounds=(v.wounds||[]).concat([{r:e.dmg*LEAK_K*(e.ml?2:1)*(v.se==='koshitsu'?0.5:1)*(sk(v,'oukyu')?0.5:1),t:LEAK_T*(e.ml?1.5:1)*(S.units.some(x=>!x.out&&x.team===v.team&&x.id!==v.id&&x.se==='shiketsu'&&dist(x,v)<=2)?0.5:1)}]);v.leak=leakOf(v);v.leakSrc=u.id;
     if(e.ml&&v.team!==u.team){v.bl=BLEED_TICKS+(sk(u,'fukade')?2:0);v.bsrc=u.id;e.bld=1;}
+    if(v.hp<=0&&sk(v,'fukutsu')&&!v.fukUsed){v.hp=1;v.fukUsed=1;S.log.push({r,t:`${v.name}が不屈で踏みとどまった`});}
     if(v.hp<=0){v.hp=0;v.out=true;e.ko=1;if(v.team!==u.team){S.teams[u.team].score+=1;S.kills=S.kills||{};S.kills[u.id]=(S.kills[u.id]||0)+1;}}
   }
   return evs;
@@ -2022,7 +2076,7 @@ ${sec('攻撃と防御',['扇の中に敵が入ると交戦中に自動で攻撃
  '命中率は70％＋（技術−相手の回避）×5に、トリガーや援護、指揮のボーナスが加わる。直前に味方が攻撃した敵を狙うと援護が働く。',
  'シールドは扇の中から来た攻撃を耐久が尽きるまで防ぐ。エスクードは向いた方向に高さ1の壁（耐久はシールドの2倍）。',
  '近接の強み：同じ手番なら斬撃が先、隣の射手・狙撃手を拘束（射撃−20・狙撃不可）、斬り傷からの漏出、シールドに1.5倍。',
- 'メインとサブが両方攻撃トリガーならフルアタック、技術6以上なら合成弾（ギムレット・ホーネット・コブラ・サラマンダー・トマホーク・マンティス）。'])}
+ 'メインとサブが両方攻撃トリガーならフルアタック、技術6以上なら合成弾（ギムレット・ホーネット・コブラ・サラマンダー・トマホーク・マンティス、オリジナルのファルコン・ランス・ハンマーヘッド・スワロー・クラスター）。'])}
 ${sec('トリオン',['体力とは別に「20＋トリオン×8」のトリオンを持つ。射撃・狙撃は撃つたびに消費、近接トリガーとシールドは出した時（起動したまま次の手番へ移った時）に消費。',
  'バッグワーム・カメレオンは起動中に少しずつ減る。足りないトリガーは使えず、0になると緊急脱出。',
  '被弾すると傷からトリオンが漏れる（射撃の傷は6手番、斬り傷は9手番で止まる）。漏出で脱出すると傷を負わせた相手の得点。'])}
@@ -2041,6 +2095,7 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
  '隊員ページ：自分の隊員は隊員ページの上部、ほかの隊員は部隊の詳細の行や自分の部隊の仲間の「隊員ページ」から、隊員名・能力・トリガー構成の順で見られる。',
  '仲間の成長：同じ部隊の仲間（自分以外）は、試合ごとに個人ポイントを得る（ランク戦：出場+40・撃破1人+60・生存+40・部隊が最多得点+40、防衛任務はその半分ほど）。ポイントに応じてスキルを覚え、技術・回避が伸びる。隊員ページで確認できる。NPC部隊の隊員は成長しない。',
  '隊長が緊急脱出しても通信はつながっているので、仲間が残っていれば部隊への指示・仲間への個別指示・集中攻撃を出し続けられる（作戦タイムも続く）。隊長の指揮による命中の上乗せも残る。隊員として脱出した場合は、作戦タイムを飛ばして自動で進む。',
+ 'スマホを横向きにすると、戦闘画面は左に盤面・右に操作欄の配置になる。',
  '自分の部隊が全滅したあとも試合が続くときは、全員が見える観戦モードになり、「結果まで飛ばす」で最後まで一気に進められる（この端末の試合のみ。ネット対戦は自分の部隊の視点のまま）。',
  'リプレイ：自分が出たランク戦（昇格戦・CPUに任せた試合を含む）と防衛任務を直近8試合まで自動保存。隊員ページかランク戦の画面の「リプレイ」から、全体を見渡す視点で再生・一時停止・手番送り・ラウンド移動・倍速で見られる。',
  'セーブデータはホームの「セーブデータ」からコードで書き出し・読み込みできる。'])}
@@ -2048,7 +2103,7 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
 }
 function renderHome(){
   const on=CAP==='ok';
-  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v6.3）</p>
+  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v6.6）</p>
   <div class="row" style="margin:-10px 0 16px">${soundUI()}<button class="opt" type="button" data-a="savescr">セーブデータ</button><button class="opt" type="button" data-a="dex">トリガー性能</button></div>
   <div class="card tutc"><h2>はじめての方へ</h2><p class="muted small" style="margin-top:0">基本編：隊員の選び方・移動・扇の向け方・交戦（約3分）。応用編：トリオン、エスクードの壁、グラスホッパーの跳躍、オペレーターのスキャン、仲間への指示（約5分）。</p><div class="row"><button class="btn" type="button" data-a="tutorial">基本編</button><button class="btn ghost" type="button" data-a="tutorial2">応用編</button></div></div>
   <div class="card mine"><h2>ボーダー隊員になる</h2><p class="muted small" style="margin-top:0">自分がなりきる隊員を1人作り、C級（訓練生）かB級から始めて、部隊でランク戦を戦います。自分の1人だけを操作し、仲間はCPUが動きます。</p><button class="btn" type="button" data-a="rp">隊員ページへ</button></div>
@@ -2987,11 +3042,11 @@ const isAce=m=>!!ACES[m.name]||A_TEAMS.some(t=>t.members[0].name===m.name);
 function npcPts(m){if(A_PTS[m.name])return A_PTS[m.name];if(ACES[m.name])return ACES[m.name];const s=m.T+m.TEC+m.SUP+m.EVA+m.MOB;let h=0;for(const ch of m.name)h=(h*31+ch.charCodeAt(0))%997;return clamp(Math.round((3800+(s-30)*200+(h%7)*50)/10)*10,3500,6800);}
 const rankBadge=(m,pts)=>`${A_PTS[m.name]?'<span class="pos acls">A級</span>':''}${isAce(m)?'<span class="pos ace">エース</span>':''}${pts>=MASTER?'<span class="pos master">マスター</span>':''}`;
 const SK_PRI={
-  'アタッカー':['kensoku','zangeki','fumikomi','tairyoku','ukenagashi','fukade','kenkyaku','mikiri','nebari','kenrou'],
-  'シューター':['seimitsu','dansoku','danmaku','tairyoku','gousei','sokusha','engo','kenrou','takanome','mikiri'],
-  'スナイパー':['sogekigan','ichigeki','senpuku','takanome','tairyoku','mikiri','kenrou','nebari'],
-  'オールラウンダー':['kirikae','banno','joukyou','tairyoku','kensoku','seimitsu','kenkyaku','zangeki','dansoku','mikiri'],
-  'サポート':['tairyoku','kenrou','engo','mikiri','takanome','nebari']
+  'アタッカー':['kensoku','zangeki','fumikomi','tairyoku','rengeki','ukenagashi','tosshin','fukade','kenkyaku','tatekuzushi','mikiri','nebari','fukutsu','kenrou'],
+  'シューター':['seimitsu','dansoku','danmaku','tairyoku','yudou','okidama','gousei','sokusha','setsuyaku','engo','kenrou','takanome','jikyu','mikiri'],
+  'スナイパー':['sogekigan','ichigeki','senpuku','shoujun','kousho','takanome','tairyoku','mikiri','onmitsu','kenrou','nebari'],
+  'オールラウンダー':['kirikae','banno','joukyou','tairyoku','renkei','nitou','kensoku','seimitsu','kenkyaku','zangeki','dansoku','mikiri','fukutsu'],
+  'サポート':['tairyoku','kenrou','engo','renkei','mikiri','oukyu','takanome','touha','nebari','jikyu','shikikan']
 };
 const spOf=pts=>2+Math.max(0,Math.floor((pts-4000)/500));
 const GROWTH=[[5000,'TEC'],[5500,'EVA'],[6500,'TEC'],[7000,'EVA'],[8000,'TEC'],[8000,'EVA'],[9000,'TEC'],[9500,'EVA']];
@@ -3872,6 +3927,7 @@ function timerTick(){
   }
 }
 setInterval(timerTick,500);
+window.addEventListener('orientationchange',()=>setTimeout(()=>{if(typeof CAM!=='undefined')CAM.init=false;if(G)render();},350));
 function onlinePause(on){
   const mt=myTeam();if(mt<0||!G||G.phase!=='exec')return;
   if(isHost())hostPause(mt,on);else sendMsg(NET.conn,{t:on?'pause':'resume',team:mt});
@@ -3964,7 +4020,9 @@ function dexComp(key,b){
   const c=COMPS[key],[a,bk]=key.split('+'),u=dexUnit({...b,TEC:Math.max(b.TEC,COMP_TEC)},[a],[bk]);
   const o=compSpec(null,u);
   const rows=o?[['威力',`<b>${o.pow}</b>（2つの合計×${c.mul}）`],['射程',fmtR(o)],['扇の幅',fmtDeg(halfFor({type:o.type,k:o.coef},o.rmax)*2)+'（最大射程）'],['命中補正',(o.hit>0?'+':'')+(o.hit||0)],['射線',o.type==='melee'?'必要':o.los?'必要':o.needSeen?'不要（見えている敵だけ）':'不要'],['行動力','2（スキル「合成の名手」で1）']]:[];
-  if(o&&o.type==='blast'){rows.push(['範囲','目標と周囲8マス（味方も巻き込む）']);rows.push(['建物の破壊',`着弾点と周り8マスの建物を威力分（${o.pow}）削る。1段あたり耐久${BHP}`]);}
+  if(o&&o.type==='blast'){const rr=o.radius>1?`目標を中心に${o.radius*2+1}×${o.radius*2+1}マス`:'目標と周囲8マス';rows.push(['範囲',rr+'（味方も巻き込む）']);if(o.center)rows.push(['威力の配分',`狙った敵に${Math.round(o.pow*o.center)}（×${o.center}）、周りは${Math.round(o.pow*o.splash)}（×${o.splash}）`]);rows.push(['建物の破壊',`${rr}の建物を${Math.round(o.pow*(o.bld||1))}ずつ削る${o.bld>1?`（威力の${o.bld}倍）`:''}。1段あたり耐久${BHP}`]);}
+  if(o&&o.split>1)rows.push(['分裂',`扇の中の${o.split}体に分かれて、それぞれ威力${o.pow}で当たる`]);
+  if(c.rplus)rows.push(['射程の延長',`2つの短い方の射程+${c.rplus}（最大${c.rcap}マス）`]);
   const tri=o&&o.type!=='melee'?(TRI_SHOT[a]||0)+(TRI_SHOT[bk]||0):0;
   if(tri)rows.push(['トリオン',`1発ごとに ${tri}`]);
   return `<div class="card dexc"><div class="row" style="justify-content:space-between"><b class="dexn">${esc(c.n)}</b><span class="pos">${o&&o.type==='melee'?'連結技':'合成弾'}</span></div>
