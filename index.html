@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ランク戦タクティクス v5.8</title>
+<title>ランク戦タクティクス v5.9</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -2042,7 +2042,7 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
  'ネット対戦では作戦タイムに制限時間（2分か3分、時間切れでその時点の作戦で決定）。交戦は1手番3秒で、一時停止は1試合ごとの持ち時間（30〜90秒）を使い切るまで。CPU戦は作戦の時間制限をなし・2分・3分から選べる。',
  '建物の破壊：メテオラ・擲弾銃・サラマンダー・トマホークなどの炸裂弾は、着弾点と周り8マスの建物を削る（1段あたり耐久8）。削りきると1段低くなり、崩れきると瓦礫（移動コスト+1）。足場や射線が変わる。マップは市街地・河川敷・工業地区・高層ビル街・住宅地・港湾地区・郊外の公園の7つ。',
  '防衛任務：B級以上。波ごとに現れるトリオン兵（フィッチ・シザー・ドーム・モルタ・スパイン）を全滅させれば成功。通常・強化・大規模侵攻の3段階で、倒した数で個人ポイント、初回成功でスキルポイント。',
- '隊員ページ：自分の隊員は隊員ページの上部、ほかの隊員は部隊の詳細や自分の部隊の仲間をタップすると、隊員名・見た目・能力・トリガー構成の順で見られる。自分の見た目は「見た目を変える」で肌・髪型・髪の色・目・口もと・小物・隊服を選べる（隊服は部隊でおそろい）。ほかの隊員の見た目は名前から自動で決まる。',
+ '隊員ページ：自分の隊員は隊員ページの上部、ほかの隊員は部隊の詳細や自分の部隊の仲間をタップすると、隊員名・見た目・能力・トリガー構成の順で見られる。自分の見た目（輪郭線のあるSD風の絵）は「見た目を変える」で肌・髪型・髪の色・目・口もと・小物・隊服を選べる（隊服は部隊でおそろい）。ほかの隊員の見た目は名前から自動で決まる。',
  '仲間の成長：同じ部隊の仲間（自分以外）は、試合ごとに個人ポイントを得る（ランク戦：出場+40・撃破1人+60・生存+40・部隊が最多得点+40、防衛任務はその半分ほど）。ポイントに応じてスキルを覚え、技術・回避が伸びる。隊員ページで確認できる。NPC部隊の隊員は成長しない。',
  '自分の部隊が全滅したあとも試合が続くときは、全員が見える観戦モードになり、「結果まで飛ばす」で最後まで一気に進められる（この端末の試合のみ。ネット対戦は自分の部隊の視点のまま）。',
  'リプレイ：自分が出たランク戦（昇格戦・CPUに任せた試合を含む）と防衛任務を直近8試合まで自動保存。隊員ページかランク戦の画面の「リプレイ」から、全体を見渡す視点で再生・一時停止・手番送り・ラウンド移動・倍速で見られる。',
@@ -2051,7 +2051,7 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
 }
 function renderHome(){
   const on=CAP==='ok';
-  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v5.8）</p>
+  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v5.9）</p>
   <div class="row" style="margin:-10px 0 16px">${soundUI()}<button class="opt" type="button" data-a="savescr">セーブデータ</button><button class="opt" type="button" data-a="dex">トリガー性能</button></div>
   <div class="card tutc"><h2>はじめての方へ</h2><p class="muted small" style="margin-top:0">基本編：隊員の選び方・移動・扇の向け方・交戦（約3分）。応用編：トリオン、エスクードの壁、グラスホッパーの跳躍、オペレーターのスキャン、仲間への指示（約5分）。</p><div class="row"><button class="btn" type="button" data-a="tutorial">基本編</button><button class="btn ghost" type="button" data-a="tutorial2">応用編</button></div></div>
   <div class="card mine"><h2>ボーダー隊員になる</h2><p class="muted small" style="margin-top:0">自分がなりきる隊員を1人作り、C級（訓練生）かB級から始めて、部隊でランク戦を戦います。自分の1人だけを操作し、仲間はCPUが動きます。</p><button class="btn" type="button" data-a="rp">隊員ページへ</button></div>
@@ -4111,87 +4111,88 @@ function renderReplays(){
 }
 
 const AV={
-  skin:['#FBE5D6','#F4D3BC','#E8BE9F','#D6A482','#B7835F'],
-  hair:['#1D1D24','#3A2922','#6A4530','#A6744B','#CDB68C','#7E8898','#2B3D68','#8B2F33','#DADBE3'],
-  eye:['#3A2922','#2A4C7D','#2E6B4E','#82302E','#5A3E7D','#B27C1F'],
-  hs:['ショート','ツンツン','ボブ','ロング','ポニーテール','流し前髪','ベリーショート','ツインテール'],
-  ey:['まる目','つり目','たれ目','細目'],
-  mo:['笑顔','すまし','不敵','元気'],
+  skin:['#FFF0E6','#FBE1CF','#F1CDB0','#DDAE88','#B88563'],
+  hair:['#2A2A33','#4A3328','#7A5236','#B98A5A','#E2CF9E','#9AA3B3','#33467A','#963A3F','#F2F2F6'],
+  eye:['#22222A','#2A4C7D','#2E6B4E','#82302E','#5A3E7D','#9C6A12'],
+  hs:['ふんわり','ツンツン','ボブ','ロング','ポニーテール','流し前髪','ベリーショート','ツインテール'],
+  ey:['まる目','ジト目','キラ目','つり目'],
+  mo:['すまし','にっこり','とがり口','への字'],
   ac:['なし','メガネ','ヘッドホン','ヘアピン','ばんそうこう','ゴーグル'],
   uf:['ジャケット','ハイネック','コート','パーカー']
 };
 function avShade(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=(n>>8)&255,b=n&255;const m=x=>Math.max(0,Math.min(255,Math.round(f<0?x*(1+f):x+(255-x)*f)));return '#'+[m(r),m(g),m(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 function avatarSVG(L,o){
   o=o||{};const uni=o.uni||'#2B6C84',acc=o.acc||'#19F5C1',id='a'+Math.random().toString(36).slice(2,8);
+  const K='#1E2026',SW='stroke="'+K+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"';
   const sk=AV.skin[L.sk%AV.skin.length],hc=AV.hair[L.hc%AV.hair.length],ec=AV.eye[L.ec%AV.eye.length];
-  const skD=avShade(sk,-0.12),hcD=avShade(hc,-0.28),hcL=avShade(hc,0.25),uD=avShade(uni,-0.32),uL=avShade(uni,0.22);
+  const skD=avShade(sk,-0.14),hcD=avShade(hc,-0.22),hcL=avShade(hc,0.35),uD=avShade(uni,-0.35),uL=avShade(uni,0.3);
+  const hs=L.hs%8,ey=L.ey%4,mo=L.mo%4,ac=L.ac%6,uf=L.uf%4;
   let s=`<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" class="avatar"${o.size?` width="${o.size}" height="${Math.round(o.size*1.2)}"`:''}>`;
-  s+=`<defs><linearGradient id="${id}bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${avShade(uni,-0.55)}"/><stop offset="1" stop-color="${avShade(uni,-0.2)}"/></linearGradient><clipPath id="${id}c"><rect width="100" height="120" rx="10"/></clipPath></defs>`;
+  s+=`<defs><linearGradient id="${id}bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${avShade(uni,0.78)}"/><stop offset="1" stop-color="${avShade(uni,0.55)}"/></linearGradient><clipPath id="${id}c"><rect width="100" height="120" rx="10"/></clipPath></defs>`;
   s+=`<g clip-path="url(#${id}c)"><rect width="100" height="120" fill="url(#${id}bg)"/>`;
-  s+=`<path d="M-5 45 L105 25 L105 33 L-5 53Z" fill="#fff" opacity=".05"/><path d="M-5 70 L105 50 L105 54 L-5 74Z" fill="#fff" opacity=".04"/>`;
-  s+=`<g transform="translate(50 70) scale(1.12) translate(-50 -66)">`;
+  s+=`<circle cx="84" cy="18" r="22" fill="#fff" opacity=".25"/><circle cx="12" cy="98" r="16" fill="#fff" opacity=".18"/>`;
   // back hair
-  const hs=L.hs%8;
-  if(hs===3)s+=`<path d="M27 44 C25 70 26 96 22 112 L78 112 C74 96 75 70 73 44 Z" fill="${hcD}"/>`;
-  if(hs===2)s+=`<path d="M28 46 C27 62 28 74 31 80 L69 80 C72 74 73 62 72 46 Z" fill="${hcD}"/>`;
-  if(hs===4)s+=`<path d="M64 40 C82 44 84 62 78 84 C76 92 72 96 70 94 C74 80 74 60 62 50 Z" fill="${hcD}"/>`;
-  if(hs===7)s+=`<path d="M28 44 C14 50 12 74 18 90 C21 96 25 95 25 90 C22 76 24 60 31 52Z" fill="${hcD}"/><path d="M72 44 C86 50 88 74 82 90 C79 96 75 95 75 90 C78 76 76 60 69 52Z" fill="${hcD}"/>`;
-  // body / uniform
-  const uf=L.uf%4;
-  if(uf===3)s+=`<path d="M22 102 C24 90 36 84 50 84 C64 84 76 90 78 102 Z" fill="${uD}"/>`;
-  s+=`<path d="M6 120 C8 100 24 91 50 91 C76 91 92 100 94 120 Z" fill="${uni}"/>`;
-  s+=`<path d="M6 120 C8 100 24 91 50 91 C76 91 92 100 94 120" fill="none" stroke="${uL}" stroke-width="1.2" opacity=".6"/>`;
-  s+=`<rect x="44" y="76" width="12" height="16" rx="4" fill="${skD}"/>`;
-  if(uf===0)s+=`<path d="M40 91 L50 104 L60 91" fill="none" stroke="${uL}" stroke-width="2.2"/><line x1="50" y1="104" x2="50" y2="120" stroke="${uD}" stroke-width="1.6"/>`;
-  if(uf===1)s+=`<path d="M38 92 C38 84 42 82 50 82 C58 82 62 84 62 92 C58 95 42 95 38 92Z" fill="${uD}"/><path d="M38 92 C42 95 58 95 62 92" fill="none" stroke="${uL}" stroke-width="1"/>`;
-  if(uf===2)s+=`<path d="M38 91 L50 110 L44 120 L30 120 L28 96Z" fill="${uD}"/><path d="M62 91 L50 110 L56 120 L70 120 L72 96Z" fill="${uD}"/><path d="M42 91 L50 104 L58 91" fill="${avShade(uni,0.5)}" opacity=".85"/>`;
-  if(uf===3)s+=`<path d="M38 91 C42 98 58 98 62 91" fill="none" stroke="${uD}" stroke-width="3"/><line x1="45" y1="96" x2="44" y2="110" stroke="${uL}" stroke-width="1.2"/><line x1="55" y1="96" x2="56" y2="110" stroke="${uL}" stroke-width="1.2"/>`;
-  s+=`<path d="M24 104 l4 -4 l4 4 l-4 4z" fill="${acc}"/>`;
-  // ears & head
-  s+=`<ellipse cx="29" cy="56" rx="4" ry="6" fill="${skD}"/><ellipse cx="71" cy="56" rx="4" ry="6" fill="${skD}"/>`;
-  s+=`<path d="M30 46 C30 27 70 27 70 46 L70 57 C70 72 59 81 50 81 C41 81 30 72 30 57 Z" fill="${sk}"/>`;
-  s+=`<path d="M33 66 C36 74 43 79 50 79 C46 76 40 72 37 64Z" fill="${skD}" opacity=".35"/>`;
-  // cheeks
-  s+=`<ellipse cx="38" cy="66" rx="4" ry="2" fill="#E8868A" opacity=".22"/><ellipse cx="62" cy="66" rx="4" ry="2" fill="#E8868A" opacity=".22"/>`;
-  // eyes
-  const ey=L.ey%4,E=(cx,dir)=>{
-    if(ey===0)return `<ellipse cx="${cx}" cy="58" rx="3.6" ry="4.4" fill="${ec}"/><ellipse cx="${cx}" cy="59.5" rx="2" ry="2.4" fill="${avShade(ec,-0.45)}"/><circle cx="${cx-1.2}" cy="56.6" r="1.2" fill="#fff"/><path d="M${cx-4.4} 54.6 Q${cx} 52 ${cx+4.4} 54.6" fill="none" stroke="#2A1E1E" stroke-width="1.5" stroke-linecap="round"/>`;
-    if(ey===1)return `<path d="M${cx-4.5} ${58+dir*0.4} Q${cx} ${53.8} ${cx+4.5} ${57-dir*1.8} Q${cx} ${62} ${cx-4.5} ${58+dir*0.4}Z" fill="${ec}"/><circle cx="${cx}" cy="58.4" r="1.8" fill="${avShade(ec,-0.45)}"/><circle cx="${cx-1.1}" cy="57" r="0.9" fill="#fff"/><path d="M${cx-4.8} ${58.2+dir*0.4} Q${cx} ${53.2} ${cx+4.8} ${56.6-dir*1.8}" fill="none" stroke="#2A1E1E" stroke-width="1.6" stroke-linecap="round"/>`;
-    if(ey===2)return `<path d="M${cx-4.4} ${56.6-dir*0.9} Q${cx} ${54.4} ${cx+4.4} ${57.4+dir*0.9} Q${cx} ${62.4} ${cx-4.4} ${56.6-dir*0.9}Z" fill="${ec}"/><circle cx="${cx}" cy="59" r="1.9" fill="${avShade(ec,-0.45)}"/><circle cx="${cx-1}" cy="57.6" r="0.9" fill="#fff"/><path d="M${cx-4.8} ${56.4-dir*0.9} Q${cx} ${53.8} ${cx+4.8} ${57.6+dir*0.9}" fill="none" stroke="#2A1E1E" stroke-width="1.5" stroke-linecap="round"/>`;
-    return `<path d="M${cx-4.4} 58.4 Q${cx} 56.2 ${cx+4.4} 58.4" fill="none" stroke="#2A1E1E" stroke-width="1.8" stroke-linecap="round"/><path d="M${cx-3} 58.6 Q${cx} 60 ${cx+3} 58.6" fill="${ec}" opacity=".9"/>`;
+  const back={
+    0:`<path d="M20 60 C15 36 30 16 50 16 C70 16 85 36 80 60 L76 72 L68 66 L32 66 L24 72 Z" fill="${hcD}" ${SW}/>`,
+    1:`<path d="M22 56 C18 36 32 18 50 18 C68 18 82 36 78 56 L74 66 L26 66 Z" fill="${hcD}" ${SW}/>`,
+    2:`<path d="M20 60 C14 34 30 15 50 15 C70 15 86 34 80 60 C80 70 78 78 74 82 L26 82 C22 78 20 70 20 60Z" fill="${hcD}" ${SW}/>`,
+    3:`<path d="M20 58 C14 32 30 15 50 15 C70 15 86 32 80 58 C82 80 84 100 86 112 L14 112 C16 100 18 80 20 58Z" fill="${hcD}" ${SW}/>`,
+    4:`<path d="M22 56 C18 34 32 17 50 17 C68 17 82 34 78 56 Z" fill="${hcD}" ${SW}/><path d="M74 34 C92 36 94 58 88 80 C86 88 82 92 80 88 C84 72 82 54 70 44 Z" fill="${hcD}" ${SW}/>`,
+    5:`<path d="M21 58 C16 34 30 16 50 16 C70 16 84 34 79 58 L74 70 L26 70 Z" fill="${hcD}" ${SW}/>`,
+    6:`<path d="M25 52 C22 34 34 22 50 22 C66 22 78 34 75 52 Z" fill="${hcD}" ${SW}/>`,
+    7:`<path d="M22 56 C18 34 32 17 50 17 C68 17 82 34 78 56 Z" fill="${hcD}" ${SW}/><path d="M24 40 C8 46 6 74 12 92 C14 98 19 98 19 92 C16 76 18 60 28 50Z" fill="${hcD}" ${SW}/><path d="M76 40 C92 46 94 74 88 92 C86 98 81 98 81 92 C84 76 82 60 72 50Z" fill="${hcD}" ${SW}/>`
   };
-  s+=E(41,-1)+E(59,1);
-  // brows
-  const bA=ey===1?[[36,51.5,45,50],[55,50,64,51.5]]:ey===2?[[36,50,45,51.2],[55,51.2,64,50]]:[[36.5,50.6,45,50],[55,50,63.5,50.6]];
-  s+=bA.map(([a,b,c,d])=>`<path d="M${a} ${b} Q${(a+c)/2} ${Math.min(b,d)-1.2} ${c} ${d}" fill="none" stroke="${hcD}" stroke-width="1.5" stroke-linecap="round"/>`).join('');
-  s+=`<path d="M50 61.5 L49 65.5 L50.6 65.6" fill="none" stroke="${skD}" stroke-width="0.9" stroke-linecap="round"/>`;
+  s+=back[hs];
+  // body (small, chibi)
+  if(uf===3)s+=`<path d="M28 104 C30 94 40 90 50 90 C60 90 70 94 72 104 Z" fill="${uD}" ${SW}/>`;
+  s+=`<path d="M16 122 C17 104 30 95 50 95 C70 95 83 104 84 122 Z" fill="${uni}" ${SW}/>`;
+  if(uf===0)s+=`<path d="M41 95 L50 108 L59 95" fill="${uL}" ${SW}/><line x1="50" y1="108" x2="50" y2="122" stroke="${K}" stroke-width="1.6"/>`;
+  if(uf===1)s+=`<path d="M36 98 C36 88 41 85 50 85 C59 85 64 88 64 98 C59 101 41 101 36 98Z" fill="${uD}" ${SW}/><path d="M50 99 L50 122" stroke="${K}" stroke-width="1.6"/>`;
+  if(uf===2)s+=`<path d="M38 95 L50 112 L44 122 L28 122 L30 100Z" fill="${uD}" ${SW}/><path d="M62 95 L50 112 L56 122 L72 122 L70 100Z" fill="${uD}" ${SW}/>`;
+  if(uf===3)s+=`<path d="M40 96 C44 101 56 101 60 96" fill="none" ${SW}/><path d="M45 100 L44 112 M55 100 L56 112" stroke="${K}" stroke-width="1.4"/><circle cx="44" cy="113" r="1.4" fill="${K}"/><circle cx="56" cy="113" r="1.4" fill="${K}"/>`;
+  s+=`<path d="M24 110 l4 -4 l4 4 l-4 4z" fill="${acc}" stroke="${K}" stroke-width="1.2"/>`;
+  // neck & head (big)
+  s+=`<path d="M44 84 L44 94 C46 97 54 97 56 94 L56 84 Z" fill="${skD}" ${SW}/>`;
+  s+=`<path d="M24 54 C24 32 76 32 76 54 C76 74 64 87 50 87 C36 87 24 74 24 54Z" fill="${sk}" ${SW}/>`;
+  s+=`<ellipse cx="34" cy="70" rx="4.5" ry="2.4" fill="#F28B8B" opacity=".35"/><ellipse cx="66" cy="70" rx="4.5" ry="2.4" fill="#F28B8B" opacity=".35"/>`;
+  // eyes (low on face, chibi)
+  const ex=[39,61],eyY=64;
+  const eye=(x,d)=>{
+    if(ey===0)return `<ellipse cx="${x}" cy="${eyY}" rx="3.4" ry="4.6" fill="${K}"/><circle cx="${x-1.2}" cy="${eyY-1.8}" r="1.3" fill="#fff"/>`;
+    if(ey===1)return `<path d="M${x-4} ${eyY-1} L${x+4} ${eyY-1} L${x+3.4} ${eyY+2.4} C${x+2} ${eyY+4.6} ${x-2} ${eyY+4.6} ${x-3.4} ${eyY+2.4} Z" fill="${K}"/><path d="M${x-5} ${eyY-1.4} L${x+5} ${eyY-1.4}" stroke="${K}" stroke-width="2" stroke-linecap="round"/><circle cx="${x-1.2}" cy="${eyY+0.8}" r="1" fill="#fff"/>`;
+    if(ey===2)return `<ellipse cx="${x}" cy="${eyY}" rx="3.8" ry="5" fill="${K}"/><ellipse cx="${x}" cy="${eyY+0.8}" rx="2.7" ry="3.7" fill="${ec}"/><circle cx="${x-1.3}" cy="${eyY-1.8}" r="1.5" fill="#fff"/><circle cx="${x+1.3}" cy="${eyY+2.2}" r=".8" fill="#fff"/>`;
+    return `<path d="M${x-4.4} ${eyY+(d<0?1.2:-1.8)} L${x+4.4} ${eyY+(d<0?-1.8:1.2)} L${x+3} ${eyY+3.2} C${x+1} ${eyY+4.8} ${x-2} ${eyY+4.6} ${x-3.4} ${eyY+3}Z" fill="${K}"/><circle cx="${x-0.6}" cy="${eyY+1}" r="1" fill="#fff"/>`;
+  };
+  s+=eye(ex[0],-1)+eye(ex[1],1);
   // mouth
-  const mo=L.mo%4;
-  s+=mo===0?`<path d="M45.5 70 Q50 74 54.5 70" fill="none" stroke="#9C4A46" stroke-width="1.5" stroke-linecap="round"/>`:mo===1?`<path d="M46.5 71 L53.5 71" stroke="#9C4A46" stroke-width="1.4" stroke-linecap="round"/>`:mo===2?`<path d="M46 71.2 Q51 72 54.5 69.2" fill="none" stroke="#9C4A46" stroke-width="1.5" stroke-linecap="round"/>`:`<path d="M45.5 69.6 Q50 76 54.5 69.6 Z" fill="#9C4A46"/><path d="M47 72.2 Q50 74.2 53 72.2" fill="#E8868A"/>`;
-  // front hair
-  const H={
-   0:`<path d="M28 50 C26 30 38 22 50 22 C63 22 75 30 72 50 C70 44 66 40 62 38 C60 43 54 45 48 44 C50 41 50 39 48 37 C44 42 38 45 32 45 C31 47 30 49 28 50Z" fill="${hc}"/>`,
-   1:`<path d="M27 50 C24 40 26 32 30 28 L28 20 L36 25 L38 15 L45 22 L50 12 L55 22 L62 15 L64 25 L72 20 L70 28 C74 32 76 40 73 50 C70 44 67 41 63 40 L60 46 L55 40 L50 47 L45 40 L40 46 L37 40 C33 41 30 44 27 50Z" fill="${hc}"/>`,
-   2:`<path d="M27 66 C24 44 30 22 50 22 C70 22 76 44 73 66 C71 60 70 52 68 46 C62 46 54 44 50 40 C46 44 38 46 32 46 C30 52 29 60 27 66Z" fill="${hc}"/>`,
-   3:`<path d="M26 74 C22 46 30 22 50 22 C70 22 78 46 74 74 C72 64 70 54 68 47 C64 44 58 42 55 38 C52 42 44 46 34 46 C32 54 29 64 26 74Z" fill="${hc}"/>`,
-   4:`<path d="M28 50 C26 30 38 22 50 22 C63 22 75 30 72 50 C70 45 67 42 64 40 C58 43 52 43 46 40 C42 42 36 44 31 44 C30 46 29 48 28 50Z" fill="${hc}"/><circle cx="68" cy="38" r="3.4" fill="${acc}"/>`,
-   5:`<path d="M28 52 C25 30 38 22 50 22 C64 22 76 30 72 50 C70 40 60 36 52 38 C44 40 36 46 31 56 C30 54 29 53 28 52Z" fill="${hc}"/>`,
-   6:`<path d="M30 46 C29 30 40 25 50 25 C60 25 71 30 70 46 C68 40 62 37 50 37 C38 37 32 40 30 46Z" fill="${hc}"/>`,
-   7:`<path d="M28 50 C26 30 38 22 50 22 C63 22 75 30 72 50 C70 44 66 41 61 40 C58 43 53 44 49 42 C45 44 40 45 34 44 C32 46 30 48 28 50Z" fill="${hc}"/><circle cx="29" cy="42" r="3" fill="${acc}"/><circle cx="71" cy="42" r="3" fill="${acc}"/>`
+  s+=mo===0?`<path d="M47.5 74.6 L52.5 74.6" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>`
+    :mo===1?`<path d="M46 73.4 Q50 77.6 54 73.4" fill="none" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>`
+    :mo===2?`<path d="M48.6 72.6 Q51.6 73.4 49.6 74.8 Q51.8 76 48.6 77" fill="none" stroke="${K}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`
+    :`<path d="M46.5 75.6 Q50 72.6 53.5 75.6" fill="none" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>`;
+  const lock=[0,1,4,5,7].includes(hs);
+  if(lock)s+=`<path d="M24 46 L20 76 L26 66 L28 78 L32 62 L31 50 Z" fill="${hc}" ${SW}/><path d="M76 46 L80 76 L74 66 L72 78 L68 62 L69 50 Z" fill="${hc}" ${SW}/>`;
+  // front hair (strands, covering forehead)
+  const front={
+    0:`<path d="M21 60 L18 50 L22 46 L20 36 L28 32 L28 23 L37 24 L42 15 L49 20 L56 14 L60 23 L69 22 L71 31 L79 35 L78 46 L82 50 L79 60 L75 52 L73 60 L68 48 L64 62 L60 46 L55 60 L52 44 L47 60 L43 46 L39 62 L35 48 L31 60 L28 52 L25 60 Z" fill="${hc}" ${SW}/>`,
+    1:`<path d="M21 56 C18 40 22 30 28 25 L24 14 L35 20 L37 8 L45 17 L51 5 L56 17 L64 8 L66 20 L76 14 L72 25 C78 30 82 40 79 56 L74 48 L70 56 L65 46 L60 56 L55 44 L50 56 L45 44 L40 56 L35 46 L30 56 L26 48 Z" fill="${hc}" ${SW}/>`,
+    2:`<path d="M20 70 C16 36 32 18 50 18 C68 18 84 36 80 70 L77 62 L76 52 C70 50 66 47 64 44 L60 54 L56 44 L52 54 L48 44 L44 54 L40 44 L36 52 L30 50 L24 54 L23 62 Z" fill="${hc}" ${SW}/>`,
+    3:`<path d="M20 76 C15 38 32 18 50 18 C68 18 85 38 80 76 L77 66 L76 52 C71 48 67 46 64 42 L60 54 L56 44 L52 56 L47 44 L43 56 L38 44 L34 54 L28 50 L24 54 L23 66 Z" fill="${hc}" ${SW}/>`,
+    4:`<path d="M22 56 C19 34 33 18 50 18 C67 18 81 34 78 56 L74 50 L71 58 L66 46 L62 58 L57 46 L52 58 L46 48 L41 58 L36 48 L31 58 L27 50 Z" fill="${hc}" ${SW}/><circle cx="76" cy="38" r="3.2" fill="${acc}" stroke="${K}" stroke-width="1.4"/>`,
+    5:`<path d="M21 60 L18 48 L23 44 L21 34 L30 30 L31 21 L41 22 L46 14 L53 19 L61 14 L64 22 L73 23 L74 33 L81 37 L78 48 L82 52 L78 58 L76 50 C68 40 56 38 48 44 L44 54 L40 46 L34 58 L30 50 L26 62 Z" fill="${hc}" ${SW}/>`,
+    6:`<path d="M25 52 C23 34 35 24 50 24 C65 24 77 34 75 52 L71 46 L67 50 L62 44 L57 49 L52 43 L47 49 L42 44 L37 49 L32 45 L28 50 Z" fill="${hc}" ${SW}/>`,
+    7:`<path d="M22 56 C19 34 33 18 50 18 C67 18 81 34 78 56 L74 50 L71 58 L66 46 L61 58 L56 46 L51 58 L46 46 L41 58 L36 46 L31 58 L27 50 Z" fill="${hc}" ${SW}/><circle cx="24" cy="44" r="3" fill="${acc}" stroke="${K}" stroke-width="1.4"/><circle cx="76" cy="44" r="3" fill="${acc}" stroke="${K}" stroke-width="1.4"/>`
   };
-  s+=H[hs];
-  s+=`<path d="M38 28 C44 25 52 25 58 27" fill="none" stroke="${hcL}" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>`;
-  // accessory
-  const ac=L.ac%6;
-  if(ac===1)s+=`<rect x="35" y="53.5" width="12" height="9" rx="3" fill="#fff" fill-opacity=".12" stroke="#2C2C34" stroke-width="1.3"/><rect x="53" y="53.5" width="12" height="9" rx="3" fill="#fff" fill-opacity=".12" stroke="#2C2C34" stroke-width="1.3"/><path d="M47 57 Q50 55.5 53 57" fill="none" stroke="#2C2C34" stroke-width="1.2"/>`;
-  if(ac===2)s+=`<path d="M27 50 C26 26 74 26 73 50" fill="none" stroke="#2C2F3A" stroke-width="3.2"/><rect x="22" y="48" width="9" height="14" rx="4" fill="#2C2F3A"/><rect x="69" y="48" width="9" height="14" rx="4" fill="#2C2F3A"/><rect x="24" y="51" width="3" height="8" rx="1.5" fill="${acc}"/>`;
-  if(ac===3)s+=`<rect x="58" y="34" width="10" height="3" rx="1.5" transform="rotate(-25 63 35.5)" fill="${acc}"/>`;
-  if(ac===4)s+=`<rect x="57" y="64" width="9" height="4" rx="1.5" transform="rotate(-12 61.5 66)" fill="#F1E3C8" stroke="#D2BE9B" stroke-width=".6"/>`;
-  if(ac===5)s+=`<path d="M29 34 C36 28 64 28 71 34" fill="none" stroke="#2C2F3A" stroke-width="3"/><rect x="35" y="28" width="12" height="8" rx="3.5" fill="#2C2F3A"/><rect x="53" y="28" width="12" height="8" rx="3.5" fill="#2C2F3A"/><rect x="37" y="29.5" width="8" height="5" rx="2.5" fill="${acc}" opacity=".7"/><rect x="55" y="29.5" width="8" height="5" rx="2.5" fill="${acc}" opacity=".7"/>`;
-  s+=`</g></g><rect x=".6" y=".6" width="98.8" height="118.8" rx="9.6" fill="none" stroke="${avShade(uni,0.15)}" stroke-width="1.2"/></svg>`;
+  s+=front[hs];
+  s+=`<path d="M36 26 Q44 21 54 22" fill="none" stroke="${hcL}" stroke-width="2.4" stroke-linecap="round" opacity=".8"/>`;
+  // accessories
+  if(ac===1)s+=`<rect x="31.5" y="58.5" width="15" height="11" rx="4" fill="#fff" fill-opacity=".18" stroke="${K}" stroke-width="1.8"/><rect x="53.5" y="58.5" width="15" height="11" rx="4" fill="#fff" fill-opacity=".18" stroke="${K}" stroke-width="1.8"/><path d="M46.5 62 Q50 60 53.5 62" fill="none" stroke="${K}" stroke-width="1.6"/>`;
+  if(ac===2)s+=`<path d="M20 56 C18 20 82 20 80 56" fill="none" stroke="${K}" stroke-width="5"/><path d="M20 56 C18 20 82 20 80 56" fill="none" stroke="#3A3E4A" stroke-width="2.6"/><rect x="14" y="52" width="10" height="16" rx="4.5" fill="#3A3E4A" ${SW}/><rect x="76" y="52" width="10" height="16" rx="4.5" fill="#3A3E4A" ${SW}/><rect x="16.5" y="56" width="3" height="8" rx="1.5" fill="${acc}"/>`;
+  if(ac===3)s+=`<rect x="62" y="38" width="12" height="3.6" rx="1.8" transform="rotate(-28 68 40)" fill="${acc}" stroke="${K}" stroke-width="1.2"/>`;
+  if(ac===4)s+=`<rect x="60" y="70" width="10" height="4.4" rx="1.8" transform="rotate(-14 65 72)" fill="#FFF3DC" stroke="${K}" stroke-width="1.2"/><path d="M63.5 70.4 L64.4 74.4 M66.4 69.8 L67.3 73.8" stroke="#D9C39E" stroke-width=".8"/>`;
+  if(ac===5)s+=`<path d="M22 34 C32 24 68 24 78 34" fill="none" stroke="${K}" stroke-width="4"/><rect x="31" y="24" width="16" height="10" rx="4.5" fill="#3A3E4A" ${SW}/><rect x="53" y="24" width="16" height="10" rx="4.5" fill="#3A3E4A" ${SW}/><rect x="33.5" y="26" width="11" height="6" rx="3" fill="${acc}" opacity=".85"/><rect x="55.5" y="26" width="11" height="6" rx="3" fill="${acc}" opacity=".85"/>`;
+  s+=`</g><rect x="1" y="1" width="98" height="118" rx="9.5" fill="none" stroke="${avShade(uni,-0.1)}" stroke-width="2"/></svg>`;
   return s;
 }
-
 
 const UNI_COL=['#2B6C84','#8B2F33','#2E6B4E','#B27C1F','#4A3F7D','#3C4A5C','#1F5F8B','#7A3B5E','#5C6B2E','#8C5A2B','#2F7F7A','#5A2E2E'];
 const UNI_N=['青緑','赤','緑','山吹','紫','鉄色','青','赤紫','草色','茶','水色','えんじ'];
