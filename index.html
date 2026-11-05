@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ランク戦タクティクス v6.7</title>
+<title>ランク戦タクティクス v6.8</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -1724,7 +1724,7 @@ function mySeatTeam(mode){
   const t=npcTeam('me');return {...t,pcIdx:LEAGUE.me.team.pcIdx};
 }
 function initMySeat(){MYSEAT={team:mySeatTeam('team'),mode:'team',ready:false,t:Date.now()};}
-function refreshSeats(){SEATS=Object.values(HOSTSEATS).sort((a,b)=>(a.t||0)-(b.t||0));}
+function refreshSeats(){SEATS=Object.values(HOSTSEATS).sort((a,b)=>(a.t||0)-(b.t||0));if(G&&G.status==='lobby'&&G.cpu>Math.max(0,ONLINE_MAX-SEATS.length))G.cpu=Math.max(0,ONLINE_MAX-SEATS.length);}
 async function createRoom(){
   netReset();clearSubs();resetUI();session++;
   MODE='online';PLAN=null;ORD={};CTRL={};MYCTRL=null;
@@ -1756,9 +1756,12 @@ function hostAccept(conn){
     pushGame();render();
   });
 }
+const ONLINE_MAX=4;
 function hostOnMsg(ent,m){
   if(!G||!m)return;
-  if(m.t==='hello'){ent.pid=String(m.pid||'').slice(0,40)||('x'+uid());toast('参加者が接続しました');pushGame();render();}
+  if(m.t==='hello'){const pid=String(m.pid||'').slice(0,40)||('x'+uid());
+    if(G.status==='lobby'&&!HOSTSEATS[pid]&&Object.keys(HOSTSEATS).length>=ONLINE_MAX){try{ent.conn.send(JSON.stringify({t:'full'}));}catch(e){}return;}
+    ent.pid=pid;toast('参加者が接続しました');pushGame();render();}
   else if(!ent.pid)return;
   else if(m.t==='seat'&&G.status==='lobby'){
     const sd=m.seat||{};HOSTSEATS[ent.pid]={uid:ent.pid,team:sd.team?sanitizeTeam(sd.team):null,ready:!!(sd.ready&&sd.team),t:+sd.t||Date.now()};
@@ -1788,7 +1791,7 @@ async function joinRoom(code){
 function clientUse(conn){
   NET.conn=conn;
   conn.onOpen(()=>{if(!NET)return;NET.status='open';sendMsg(conn,{t:'hello',pid:ME});saveSeat();render();});
-  conn.onData(raw=>{let m;try{m=JSON.parse(raw);}catch(e){return;}if(m.t==='state'&&m.G){G=m.G;ROOM=G.code||ROOM;onlineChanged();}});
+  conn.onData(raw=>{let m;try{m=JSON.parse(raw);}catch(e){return;}if(m.t==='full'){toast('この部屋は満員です（4人まで）');if(NET)NET.status='closed';goHome();return;}if(m.t==='state'&&m.G){G=m.G;ROOM=G.code||ROOM;onlineChanged();}});
   conn.onClose(()=>{if(MODE==='online'&&NET&&NET.conn===conn&&NET.status!=='closed'){NET.status='closed';toast('ホストとの接続が切れました');render();}});
 }
 async function manualJoinStart(){
@@ -2094,6 +2097,7 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
  '建物の破壊：メテオラ・擲弾銃・サラマンダー・トマホークなどの炸裂弾は、着弾点と周り8マスの建物を削る（1段あたり耐久8）。削りきると1段低くなり、崩れきると瓦礫（移動コスト+1）。足場や射線が変わる。マップは市街地・河川敷・工業地区・高層ビル街・住宅地・港湾地区・郊外の公園の7つ。',
  '防衛任務：B級以上。波ごとに現れるトリオン兵（フィッチ・シザー・ドーム・モルタ・スパイン）を全滅させれば成功。通常・強化・大規模侵攻の3段階で、倒した数で個人ポイント、初回成功でスキルポイント。',
  '隊員ページ：自分の隊員は隊員ページの上部、ほかの隊員は部隊の詳細の行や自分の部隊の仲間の「隊員ページ」から、隊員名・能力・トリガー構成の順で見られる。',
+ 'ネット対戦は部屋コードで最大4人まで同時に対戦できる（人とCPUを合わせて4部隊まで）。チーム戦は各自の部隊、ソロ戦は各自の隊員1人で、3〜4人なら乱戦。',
  '自分が隊長の3人部隊は、隊員ページの「仲間を追加（4人目）」から、あとで4人目を迎えられる（無所属のB級隊員の候補から1人）。',
  '仲間の成長：同じ部隊の仲間（自分以外）は、試合ごとに個人ポイントを得る（ランク戦：出場+40・撃破1人+60・生存+40・部隊が最多得点+40、防衛任務はその半分ほど）。ポイントに応じてスキルを覚え、技術・回避が伸びる。隊員ページで確認できる。NPC部隊の隊員は成長しない。',
  '隊長が緊急脱出しても通信はつながっているので、仲間が残っていれば部隊への指示・仲間への個別指示・集中攻撃を出し続けられる（作戦タイムも続く）。隊長の指揮による命中の上乗せも残る。隊員として脱出した場合は、作戦タイムを飛ばして自動で進む。',
@@ -2105,7 +2109,7 @@ ${sec('ランク戦と成長',['B級ランク戦は22部隊を上位・中位・
 }
 function renderHome(){
   const on=CAP==='ok';
-  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v6.7）</p>
+  app.innerHTML=`<div class="home"><h1 class="ttl">ランク戦<br>タクティクス</h1><p class="sub">ボーダー隊員になって、ランク戦を戦い抜くシミュレーション（試作版 v6.8）</p>
   <div class="row" style="margin:-10px 0 16px">${soundUI()}<button class="opt" type="button" data-a="savescr">セーブデータ</button><button class="opt" type="button" data-a="dex">トリガー性能</button></div>
   <div class="card tutc"><h2>はじめての方へ</h2><p class="muted small" style="margin-top:0">基本編：隊員の選び方・移動・扇の向け方・交戦（約3分）。応用編：トリオン、エスクードの壁、グラスホッパーの跳躍、オペレーターのスキャン、仲間への指示（約5分）。</p><div class="row"><button class="btn" type="button" data-a="tutorial">基本編</button><button class="btn ghost" type="button" data-a="tutorial2">応用編</button></div></div>
   <div class="card mine"><h2>ボーダー隊員になる</h2><p class="muted small" style="margin-top:0">自分がなりきる隊員を1人作り、C級（訓練生）かB級から始めて、部隊でランク戦を戦います。自分の1人だけを操作し、仲間はCPUが動きます。</p><button class="btn" type="button" data-a="rp">隊員ページへ</button></div>
@@ -2218,8 +2222,9 @@ function renderLobby(){
   const host=G.host===ME;
   const st=NET&&NET.status;
   const codeBox=host?(st==='ready'?`<div class="roomcode">${esc(ROOM)}</div><p class="muted small" style="margin:0">参加する人はこのページを開き、このコードを入力します</p>`:st==='nopeer'?`<p class="small" style="margin:0">この環境では部屋コード方式が使えません。下の「手動で接続」を使ってください。</p>`:`<p class="muted small" style="margin:0">部屋コードを準備中…</p>`):`<div class="roomcode">${esc(ROOM||'手動接続')}</div>`;
-  const conn=host?`<p class="small" style="margin:6px 0 0">接続中の参加者：${NET.conns.filter(x=>x.pid).length}人</p>`:(st==='closed'?'<p class="small" style="color:var(--t1)">ホストとの接続が切れています</p>':'');
+  const conn=host?`<p class="small" style="margin:6px 0 0">参加者：<b>${Math.min(ONLINE_MAX,NET.conns.filter(x=>x.pid).length+1)}/${ONLINE_MAX}人</b>（あなたを含む）。部屋コードを伝えれば、最大${ONLINE_MAX}人で同時に対戦できます。</p>`:(st==='closed'?'<p class="small" style="color:var(--t1)">ホストとの接続が切れています</p>':'');
   const manual=host?`<details class="tdesc card" ${ui.mOffer||ui.mAns?'open':''}><summary>手動で接続（サーバーを使わない）</summary>
+     <p class="small muted">手動接続は1人ずつのやりとりなので、2人で遊ぶとき向けです。3〜4人で遊ぶときは部屋コードを使ってください。</p>
     <p>1. 参加者から届いた「接続コード」を貼り付けて、応答コードを作ります。</p>
     <textarea id="mOfferIn" rows="3" style="width:100%;font-size:11px" placeholder="接続コード">${esc(ui.mOffer||'')}</textarea>
     <div class="row" style="margin:6px 0"><button class="btn sm" type="button" data-a="manswer">応答コードを作る</button></div>
@@ -4370,7 +4375,7 @@ app.addEventListener('click',e=>{
   else if(a==='lsStart'||a==='rematch')startLocalGame();
   else if(a==='ready'){MYSEAT.ready=!MYSEAT.ready;saveSeat();renderLobby();}
   else if(a==='start')startOnline();
-  else if((a==='cpuPlus'||a==='cpuMinus')&&G&&G.host===ME){G.cpu=clamp((G.cpu||0)+(a==='cpuPlus'?1:-1),0,3);G.seq=(G.seq||0)+1;pushGame();renderLobby();}
+  else if((a==='cpuPlus'||a==='cpuMinus')&&G&&G.host===ME){G.cpu=clamp((G.cpu||0)+(a==='cpuPlus'?1:-1),0,Math.max(0,ONLINE_MAX-SEATS.length));G.seq=(G.seq||0)+1;pushGame();renderLobby();}
   else if(a==='handoff'){if(OPTS.planSec)ui.planEnd=Date.now()+OPTS.planSec*1000;ui.phase=null;render();}
   else if(a==='cell')onCell(+el.dataset.x,+el.dataset.y);
   else if(a==='sel'&&ui.opMode==='route'){const u=uById(G,v);if(u){const ot=u.team;if(routeReady(G,ot)){opRouteN(G,ot,u.id);sfx('radio');opSay(G,ot,`${u.name}さん、ルートを送ります。このラウンドは行動力+3`);}}ui.opMode=null;render();}
